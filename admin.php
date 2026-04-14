@@ -39,6 +39,31 @@ try {
     // Ignora se a tabela não existir
 }
 
+// Pega dados do histórico de acessos
+$stats_acessos = [
+    'hoje' => 0,
+    'semana' => 0,
+    'mes' => 0,
+    'total' => 0
+];
+$lista_historico = [];
+try {
+    $hoje = date('Y-m-d');
+
+    // Consultas para as estatísticas
+    $stats_acessos['hoje'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos WHERE DATE(data_acesso) = '$hoje'")->fetchColumn();
+    $stats_acessos['semana'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos WHERE YEARWEEK(data_acesso, 1) = YEARWEEK(CURDATE(), 1)")->fetchColumn();
+    $stats_acessos['mes'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos WHERE MONTH(data_acesso) = MONTH(CURDATE()) AND YEAR(data_acesso) = YEAR(CURDATE())")->fetchColumn();
+    $stats_acessos['total'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos")->fetchColumn();
+
+    // Pega os últimos 100 acessos para a tabela
+    $stmtHistorico = $pdo->query("SELECT * FROM historico_acessos ORDER BY data_acesso DESC LIMIT 100");
+    $lista_historico = $stmtHistorico->fetchAll(PDO::FETCH_ASSOC);
+
+} catch (Exception $e) {
+    // Tabela pode não existir ainda
+}
+
 // Função simples para extrair o nome do navegador do User Agent
 function getBrowserName($user_agent) {
     $t = strtolower($user_agent);
@@ -128,6 +153,7 @@ function getOSName($user_agent) {
         <a href="#mural" class="nav-link"><i class="fas fa-bullhorn"></i> Mural</a>
         <a href="#midia" class="nav-link"><i class="fas fa-images"></i> Galeria</a>
         <a href="#videos-medico-admin" class="nav-link"><i class="fas fa-user-md"></i> Vídeos Médico</a>
+        <a href="#historico-acessos-admin" class="nav-link"><i class="fas fa-chart-line"></i> Acessos</a>
         <a href="index.php" target="_blank"><i class="fas fa-external-link-alt"></i> Ver Site</a>
         <a href="?sair=1" class="logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
     </div>
@@ -434,6 +460,56 @@ function getOSName($user_agent) {
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr><td colspan='4' style="text-align: center; color: var(--text-muted);">Nenhuma pessoa online no momento.</td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card admin-section" id="historico-acessos-admin" style="display: none;">
+            <h3><i class="fas fa-chart-line"></i> Histórico de Acessos</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Resumo geral de quantos visitantes únicos o site recebeu.</p>
+
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px;">
+                <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Hoje</div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);"><?php echo $stats_acessos['hoje']; ?></div>
+                </div>
+                <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Esta Semana</div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);"><?php echo $stats_acessos['semana']; ?></div>
+                </div>
+                <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Este Mês</div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);"><?php echo $stats_acessos['mes']; ?></div>
+                </div>
+                <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Total</div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--success);"><?php echo $stats_acessos['total']; ?></div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px; font-size: 1.1rem;">Últimos 100 Visitantes</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data do Acesso</th>
+                        <th>IP</th>
+                        <th>Sistema / Dispositivo</th>
+                        <th>Navegador</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if(count($lista_historico) > 0): ?>
+                        <?php foreach($lista_historico as $acesso): ?>
+                        <tr>
+                            <td><?php echo date('d/m/Y H:i:s', strtotime($acesso['data_acesso'])); ?></td>
+                            <td style="font-family: monospace; color: var(--primary);"><?php echo htmlspecialchars($acesso['ip_address'] ?: 'Desconhecido'); ?></td>
+                            <td><?php echo getOSName($acesso['user_agent']); ?></td>
+                            <td><?php echo getBrowserName($acesso['user_agent']); ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr><td colspan='4' style="text-align: center; color: var(--text-muted);">Nenhum acesso registrado ainda.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>

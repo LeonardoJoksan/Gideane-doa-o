@@ -36,6 +36,16 @@ try {
         // Ignora se a coluna já existir
     }
 
+    // Cria a tabela de histórico de acessos (permanente)
+    $sql_historico = "CREATE TABLE IF NOT EXISTS historico_acessos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        sessao_id VARCHAR(100) UNIQUE NOT NULL,
+        ip_address VARCHAR(45),
+        user_agent VARCHAR(255),
+        data_acesso TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )";
+    $pdo->exec($sql_historico);
+
 } catch (PDOException $e) {
     die("Erro de conexão com o banco de dados: " . $e->getMessage());
 }
@@ -79,6 +89,15 @@ if (!empty($sessao_atual) && !$is_bot) {
             ':ip_up' => $ip_address,
             ':ua_up' => $ua_truncado
         ]);
+
+        // Registra o acesso histórico (ignora se a sessão já foi inserida)
+        $stmtHistorico = $pdo->prepare("INSERT IGNORE INTO historico_acessos (sessao_id, ip_address, user_agent) VALUES (:sessao_id, :ip, :ua)");
+        $stmtHistorico->execute([
+            ':sessao_id' => $sessao_atual,
+            ':ip' => $ip_address,
+            ':ua' => $ua_truncado
+        ]);
+
     } catch (PDOException $e) {
         // Ignora silenciosamente erros relacionados à tabela de usuários online no frontend
     }
