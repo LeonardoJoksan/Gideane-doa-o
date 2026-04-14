@@ -219,6 +219,9 @@ $total_doacoes_qtd = 0;
 $maior_doacao = ['nome' => 'Ninguém', 'valor' => 0];
 $soma_total = 0;
 
+$metodos_pagamento = ['PIX' => 0, 'Mercado Pago' => 0, 'Outros/Manual' => 0];
+$faixas_doacao = ['Ate50' => 0, '50a200' => 0, '200a500' => 0, 'Mais500' => 0];
+
 foreach ($atualizacoes as $up) {
     if (preg_match('/([A-Za-zÀ-ú\s]+)\sacabou de doar R\$ ([0-9]+(?:\.[0-9]{3})*,[0-9]{2})/', $up['descricao'], $matches)) {
         $nome_doador = trim($matches[1]);
@@ -230,19 +233,54 @@ foreach ($atualizacoes as $up) {
         $total_doacoes_qtd++;
         $soma_total += $valor;
 
+        $nome_formatado = formatarNomeDoador($nome_doador);
+
         if ($valor > $maior_doacao['valor']) {
             $maior_doacao['valor'] = $valor;
-            $maior_doacao['nome'] = $nome_doador;
+            $maior_doacao['nome'] = $nome_formatado;
         }
 
         // Agrupa por nome para pegar "Quem doou mais no total"
-        if (!isset($doadores[$nome_doador])) {
-            $doadores[$nome_doador] = ['qtd' => 0, 'total' => 0];
+        if (!isset($doadores[$nome_formatado])) {
+            $doadores[$nome_formatado] = ['qtd' => 0, 'total' => 0];
         }
-        $doadores[$nome_doador]['qtd']++;
-        $doadores[$nome_doador]['total'] += $valor;
+        $doadores[$nome_formatado]['qtd']++;
+        $doadores[$nome_formatado]['total'] += $valor;
+
+        // Triagem de Método de Pagamento
+        if (stripos($up['descricao'], 'pix') !== false) {
+            $metodos_pagamento['PIX']++;
+        } elseif (stripos($up['descricao'], 'mercado pago') !== false || stripos($up['descricao'], 'mercadopago') !== false) {
+            $metodos_pagamento['Mercado Pago']++;
+        } else {
+            $metodos_pagamento['Outros/Manual']++;
+        }
+
+        // Triagem por Faixa de Valor
+        if ($valor < 50) $faixas_doacao['Ate50']++;
+        elseif ($valor >= 50 && $valor < 200) $faixas_doacao['50a200']++;
+        elseif ($valor >= 200 && $valor < 500) $faixas_doacao['200a500']++;
+        else $faixas_doacao['Mais500']++;
     }
 }
+
+// Lógica de Metas Financeiras Diárias e de Prazo
+$data_inicio = new DateTime('2026-03-20');
+$data_alvo = new DateTime('2026-05-06'); // 4 semanas após 08/04
+$hoje = new DateTime();
+if ($hoje > $data_alvo) $hoje = $data_alvo; // Congela se já passou
+if ($hoje < $data_inicio) $hoje = clone $data_inicio;
+
+$dias_totais = $data_inicio->diff($data_alvo)->days;
+$dias_passados = $data_inicio->diff($hoje)->days ?: 1; // Evita divisão por zero
+$dias_restantes = $hoje->diff($data_alvo)->days;
+
+$meta_total = $config['meta_total'];
+$arrecadado = $config['valor_arrecadado'];
+$valor_faltante = max(0, $meta_total - $arrecadado);
+
+$arrecadacao_diaria_necessaria = $dias_restantes > 0 ? ($valor_faltante / $dias_restantes) : $valor_faltante;
+$media_diaria_atual = $arrecadado / $dias_passados;
 
 // Ordena o array de doadores pelo valor total doado
 uasort($doadores, function($a, $b) {
@@ -251,6 +289,29 @@ uasort($doadores, function($a, $b) {
 $top_5_doadores = array_slice($doadores, 0, 5, true);
 $media_doacao = $total_doacoes_qtd > 0 ? ($soma_total / $total_doacoes_qtd) : 0;
 
+
+// Função para formatar o nome do doador (ex: Leonardo Joksan -> Leonardo J.)
+function formatarNomeDoador($nomeCompleto) {
+    $partes = explode(' ', trim($nomeCompleto));
+    // Ignora preposições comuns em nomes
+    $preposicoes = ['de', 'da', 'do', 'das', 'dos'];
+
+    // Filtra preposições para pegar apenas nomes reais
+    $nomesValidos = [];
+    foreach($partes as $p) {
+        if(!in_array(strtolower($p), $preposicoes) && !empty($p)) {
+            $nomesValidos[] = $p;
+        }
+    }
+
+    if(count($nomesValidos) == 0) return 'Anônimo';
+    if(count($nomesValidos) == 1) return ucfirst(strtolower($nomesValidos[0]));
+
+    $primeiroNome = ucfirst(strtolower($nomesValidos[0]));
+    $sobrenomeInicial = strtoupper(substr($nomesValidos[1], 0, 1));
+
+    return $primeiroNome . ' ' . $sobrenomeInicial . '.';
+}
 
 // Função simples para extrair o nome do navegador do User Agent
 function getBrowserName($user_agent) {
@@ -694,6 +755,43 @@ function getOSName($user_agent) {
                 </div>
             </div>
 
+            <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Metas e Projeções Financeiras</h4>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; background: var(--bg-light); padding: 20px; border-radius: 8px;">
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Média Diária Atual</div>
+                    <div style="font-size: 1.6rem; font-weight: 700; color: var(--primary);">R$ <?php echo number_format($media_diaria_atual, 2, ',', '.'); ?>/dia</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">Média desde <?php echo $data_inicio->format('d/m/Y'); ?></div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color);">
+                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Valor Faltante na Meta</div>
+                    <div style="font-size: 1.6rem; font-weight: 700; color: #EF4444;">R$ <?php echo number_format($valor_faltante, 2, ',', '.'); ?></div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">Faltam <?php echo $dias_restantes; ?> dias para o prazo</div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Arrecadação Diária Necessária</div>
+                    <div style="font-size: 1.6rem; font-weight: 700; color: #F59E0B;">R$ <?php echo number_format($arrecadacao_diaria_necessaria, 2, ',', '.'); ?>/dia</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">Para atingir a meta no prazo</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+                <div>
+                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Formas de Pagamento</h4>
+                    <div style="background: var(--bg-light); padding: 15px; border-radius: 8px; height: 250px; display: flex; align-items: center; justify-content: center;">
+                        <canvas id="chartMetodos"></canvas>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Faixas de Doação</h4>
+                    <div style="background: var(--bg-light); padding: 15px; border-radius: 8px; height: 250px; display: flex; align-items: center; justify-content: center;">
+                        <canvas id="chartFaixas"></canvas>
+                    </div>
+                </div>
+            </div>
+
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
                 <div>
                     <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Top 5 Doadores (Volume Total)</h4>
@@ -940,6 +1038,12 @@ function getOSName($user_agent) {
         const chartDevicesLabels = ['Mobile', 'Desktop'];
         const chartDevicesData = [<?php echo $stats_extras['devices']['Mobile']; ?>, <?php echo $stats_extras['devices']['Desktop']; ?>];
 
+        const chartMetodosLabels = <?php echo json_encode(array_keys($metodos_pagamento)); ?>;
+        const chartMetodosData = <?php echo json_encode(array_values($metodos_pagamento)); ?>;
+
+        const chartFaixasLabels = ['Até R$ 50', 'R$ 50 - R$ 200', 'R$ 200 - R$ 500', 'Mais de R$ 500'];
+        const chartFaixasData = <?php echo json_encode(array_values($faixas_doacao)); ?>;
+
         document.addEventListener('DOMContentLoaded', function() {
             // 1. Gráfico de Dias da Semana (Bar)
             const ctxDias = document.getElementById('chartDias');
@@ -1131,6 +1235,50 @@ function getOSName($user_agent) {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
+                    }
+                });
+            }
+
+            // 9. Gráfico Métodos de Pagamento (Pie)
+            const ctxMetodos = document.getElementById('chartMetodos');
+            if (ctxMetodos) {
+                new Chart(ctxMetodos, {
+                    type: 'pie',
+                    data: {
+                        labels: chartMetodosLabels,
+                        datasets: [{
+                            data: chartMetodosData,
+                            backgroundColor: ['#10B981', '#0EA5E9', '#94A3B8'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 12 } } } }
+                    }
+                });
+            }
+
+            // 10. Gráfico Faixas de Doação (Bar)
+            const ctxFaixas = document.getElementById('chartFaixas');
+            if (ctxFaixas) {
+                new Chart(ctxFaixas, {
+                    type: 'bar',
+                    data: {
+                        labels: chartFaixasLabels,
+                        datasets: [{
+                            label: 'Nº de Doações',
+                            data: chartFaixasData,
+                            backgroundColor: 'rgba(139, 92, 246, 0.7)',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } }
                     }
                 });
             }
