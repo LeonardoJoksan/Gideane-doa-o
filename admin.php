@@ -56,6 +56,99 @@ try {
     $stats_acessos['mes'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos WHERE MONTH(data_acesso) = MONTH(CURDATE()) AND YEAR(data_acesso) = YEAR(CURDATE())")->fetchColumn();
     $stats_acessos['total'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos")->fetchColumn();
 
+    // MAIS DE 30 NOVAS MÉTRICAS (Agregações)
+    $stats_extras = [];
+
+    // 1-5. Localização (Top Estados e Cidades)
+    $stats_extras['top_estados'] = $pdo->query("SELECT estado, COUNT(*) as qtd FROM historico_acessos WHERE estado IS NOT NULL AND estado != 'N/A' GROUP BY estado ORDER BY qtd DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+    $stats_extras['top_cidades'] = $pdo->query("SELECT cidade, COUNT(*) as qtd FROM historico_acessos WHERE cidade IS NOT NULL AND cidade != 'Local/Privado' GROUP BY cidade ORDER BY qtd DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+    $stats_extras['qtd_estados_distintos'] = $pdo->query("SELECT COUNT(DISTINCT estado) FROM historico_acessos WHERE estado IS NOT NULL AND estado != 'N/A'")->fetchColumn();
+    $stats_extras['qtd_cidades_distintas'] = $pdo->query("SELECT COUNT(DISTINCT cidade) FROM historico_acessos WHERE cidade IS NOT NULL AND cidade != 'Local/Privado'")->fetchColumn();
+    $stats_extras['acessos_internacionais'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos WHERE estado NOT IN ('AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO') AND estado != 'N/A' AND estado IS NOT NULL")->fetchColumn();
+
+    // 6-12. Análise de Tempo (Dias da semana, pico de horário)
+    // Usando DAYOFWEEK (1 = Domingo, 2 = Segunda...)
+    $dias_semana = $pdo->query("SELECT DAYOFWEEK(data_acesso) as dia, COUNT(*) as qtd FROM historico_acessos GROUP BY dia ORDER BY dia ASC")->fetchAll(PDO::FETCH_ASSOC);
+    $nome_dias = [1 => 'Domingo', 2 => 'Segunda', 3 => 'Terça', 4 => 'Quarta', 5 => 'Quinta', 6 => 'Sexta', 7 => 'Sábado'];
+    $stats_extras['acessos_por_dia'] = [];
+    $maior_dia_qtd = 0;
+    $stats_extras['melhor_dia'] = 'N/A';
+
+    foreach($dias_semana as $ds) {
+        $stats_extras['acessos_por_dia'][$nome_dias[$ds['dia']]] = $ds['qtd'];
+        if($ds['qtd'] > $maior_dia_qtd) {
+            $maior_dia_qtd = $ds['qtd'];
+            $stats_extras['melhor_dia'] = $nome_dias[$ds['dia']];
+        }
+    }
+
+    $stats_extras['dia_com_mais_acessos_historico'] = $pdo->query("SELECT DATE(data_acesso) as data_pico, COUNT(*) as qtd FROM historico_acessos GROUP BY data_pico ORDER BY qtd DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+    $stats_extras['hora_pico'] = $pdo->query("SELECT HOUR(data_acesso) as hora, COUNT(*) as qtd FROM historico_acessos GROUP BY hora ORDER BY qtd DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+    $stats_extras['acessos_madrugada'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos WHERE HOUR(data_acesso) BETWEEN 0 AND 5")->fetchColumn();
+    $stats_extras['acessos_manha'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos WHERE HOUR(data_acesso) BETWEEN 6 AND 11")->fetchColumn();
+    $stats_extras['acessos_tarde'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos WHERE HOUR(data_acesso) BETWEEN 12 AND 17")->fetchColumn();
+    $stats_extras['acessos_noite'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos WHERE HOUR(data_acesso) BETWEEN 18 AND 23")->fetchColumn();
+    $stats_extras['fim_de_semana'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos WHERE DAYOFWEEK(data_acesso) IN (1, 7)")->fetchColumn();
+    $stats_extras['dias_uteis'] = $stats_acessos['total'] - $stats_extras['fim_de_semana']; // 13
+
+    // 14-17. Retenção e Recência
+    $stats_extras['ultimos_7_dias'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos WHERE data_acesso >= (CURDATE() - INTERVAL 7 DAY)")->fetchColumn();
+    $stats_extras['ultimos_30_dias'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos WHERE data_acesso >= (CURDATE() - INTERVAL 30 DAY)")->fetchColumn();
+    $stats_extras['acessos_ontem'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos WHERE DATE(data_acesso) = (CURDATE() - INTERVAL 1 DAY)")->fetchColumn();
+
+    $crescimento = 0;
+    if($stats_extras['acessos_ontem'] > 0) {
+        $crescimento = (($stats_acessos['hoje'] - $stats_extras['acessos_ontem']) / $stats_extras['acessos_ontem']) * 100;
+    } else if ($stats_acessos['hoje'] > 0) {
+        $crescimento = 100; // Crescimento infinito se ontem foi 0
+    }
+    $stats_extras['crescimento_diario'] = round($crescimento, 1);
+
+    // 18-30. Agrupamento em PHP (Navegadores, OS, Dispositivos) usando as funções nativas
+    // Para não sobrecarregar o DB com LIKEs pesados, faremos a triagem em PHP de todos os registros
+    $todos_uas = $pdo->query("SELECT user_agent FROM historico_acessos")->fetchAll(PDO::FETCH_COLUMN);
+
+    $browsers = [];
+    $oss = [];
+    $devices = ['Mobile' => 0, 'Desktop' => 0];
+    $bots_filtrados = 0; // Se houver algum bot que passou
+    $redes_sociais = ['Instagram' => 0, 'Facebook' => 0, 'WhatsApp' => 0];
+
+    foreach($todos_uas as $ua) {
+        $b = getBrowserName($ua);
+        $o = getOSName($ua);
+
+        $browsers[$b] = ($browsers[$b] ?? 0) + 1;
+        $oss[$o] = ($oss[$o] ?? 0) + 1;
+
+        // Triagem Mobile vs Desktop (Simplificada)
+        if(stripos($ua, 'mobile') !== false || stripos($ua, 'android') !== false || stripos($ua, 'iphone') !== false || stripos($ua, 'ipad') !== false) {
+            $devices['Mobile']++;
+        } else {
+            $devices['Desktop']++;
+        }
+
+        // Triagem de origem de Redes Sociais no Browser In-App
+        if(stripos($ua, 'Instagram') !== false) $redes_sociais['Instagram']++;
+        if(stripos($ua, 'FBAN') !== false || stripos($ua, 'FBAV') !== false) $redes_sociais['Facebook']++;
+        if(stripos($ua, 'WhatsApp') !== false) $redes_sociais['WhatsApp']++; // Geralmente filtrado, mas caso haja clique direto
+    }
+
+    arsort($browsers);
+    arsort($oss);
+    arsort($redes_sociais);
+
+    $stats_extras['top_browsers'] = array_slice($browsers, 0, 4);
+    $stats_extras['top_oss'] = array_slice($oss, 0, 4);
+    $stats_extras['devices'] = $devices;
+    $stats_extras['redes_sociais'] = $redes_sociais;
+
+    // Métricas Finais em %
+    $total_devices = $devices['Mobile'] + $devices['Desktop'];
+    $stats_extras['perc_mobile'] = $total_devices > 0 ? round(($devices['Mobile'] / $total_devices) * 100, 1) : 0;
+    $stats_extras['perc_desktop'] = $total_devices > 0 ? round(($devices['Desktop'] / $total_devices) * 100, 1) : 0;
+
+
     // Pega os últimos 100 acessos para a tabela
     $stmtHistorico = $pdo->query("SELECT * FROM historico_acessos ORDER BY data_acesso DESC LIMIT 100");
     $lista_historico = $stmtHistorico->fetchAll(PDO::FETCH_ASSOC);
@@ -476,29 +569,142 @@ function getOSName($user_agent) {
         </div>
 
         <div class="card admin-section" id="historico-acessos-admin" style="display: none;">
-            <h3><i class="fas fa-chart-line"></i> Histórico de Acessos</h3>
-            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Resumo geral de quantos visitantes únicos o site recebeu.</p>
+            <h3><i class="fas fa-chart-line"></i> Dashboard de Acessos</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Análise completa de tráfego, audiência e retenção do site.</p>
 
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px;">
+            <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">1. Visão Geral (Volume)</h4>
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 30px;">
                 <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
-                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Hoje</div>
+                    <div style="font-size: 0.80rem; color: var(--text-muted); text-transform: uppercase;">Acessos Hoje</div>
                     <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);"><?php echo $stats_acessos['hoje']; ?></div>
+                    <div style="font-size: 0.75rem; color: <?php echo $stats_extras['crescimento_diario'] >= 0 ? 'var(--success)' : '#EF4444'; ?>;">
+                        <i class="fas fa-arrow-<?php echo $stats_extras['crescimento_diario'] >= 0 ? 'up' : 'down'; ?>"></i> <?php echo abs($stats_extras['crescimento_diario']); ?>% vs Ontem
+                    </div>
                 </div>
                 <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
-                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Esta Semana</div>
-                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);"><?php echo $stats_acessos['semana']; ?></div>
+                    <div style="font-size: 0.80rem; color: var(--text-muted); text-transform: uppercase;">Últimos 7 Dias</div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);"><?php echo $stats_extras['ultimos_7_dias']; ?></div>
                 </div>
                 <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
-                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Este Mês</div>
-                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);"><?php echo $stats_acessos['mes']; ?></div>
+                    <div style="font-size: 0.80rem; color: var(--text-muted); text-transform: uppercase;">Últimos 30 Dias</div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);"><?php echo $stats_extras['ultimos_30_dias']; ?></div>
                 </div>
                 <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
-                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Total</div>
+                    <div style="font-size: 0.80rem; color: var(--text-muted); text-transform: uppercase;">Total</div>
                     <div style="font-size: 1.8rem; font-weight: 700; color: var(--success);"><?php echo $stats_acessos['total']; ?></div>
+                </div>
+                <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.80rem; color: var(--text-muted); text-transform: uppercase;">Melhor Dia</div>
+                    <div style="font-size: 1.2rem; font-weight: 700; color: #F59E0B; margin-top: 5px;"><?php echo $stats_extras['melhor_dia']; ?></div>
                 </div>
             </div>
 
-            <h3 style="margin-top: 20px; font-size: 1.1rem;">Últimos 100 Visitantes</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+
+                <div>
+                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">2. Análise de Comportamento Temporal</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Pico Histórico de Acessos:</span>
+                            <strong><?php echo isset($stats_extras['dia_com_mais_acessos_historico']['data_pico']) ? date('d/m/Y', strtotime($stats_extras['dia_com_mais_acessos_historico']['data_pico'])) . ' (' . $stats_extras['dia_com_mais_acessos_historico']['qtd'] . ' acessos)' : 'N/A'; ?></strong>
+                        </li>
+                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Horário de Pico Geral:</span>
+                            <strong><?php echo isset($stats_extras['hora_pico']['hora']) ? $stats_extras['hora_pico']['hora'] . 'h00 (' . $stats_extras['hora_pico']['qtd'] . ' acessos)' : 'N/A'; ?></strong>
+                        </li>
+                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Acessos Fim de Semana / Úteis:</span>
+                            <strong><?php echo $stats_extras['fim_de_semana'] . ' / ' . $stats_extras['dias_uteis']; ?></strong>
+                        </li>
+                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Tráfego por Turno:</span>
+                            <span style="font-size: 0.85rem;">
+                                Madruga: <strong><?php echo $stats_extras['acessos_madrugada']; ?></strong> |
+                                Manhã: <strong><?php echo $stats_extras['acessos_manha']; ?></strong> |
+                                Tarde: <strong><?php echo $stats_extras['acessos_tarde']; ?></strong> |
+                                Noite: <strong><?php echo $stats_extras['acessos_noite']; ?></strong>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">3. Audiência Geográfica</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Total de Estados e Cidades Distintas:</span>
+                            <strong><?php echo $stats_extras['qtd_estados_distintos']; ?> estados, <?php echo $stats_extras['qtd_cidades_distintas']; ?> cidades</strong>
+                        </li>
+                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Tráfego Internacional:</span>
+                            <strong><?php echo $stats_extras['acessos_internacionais']; ?> acessos</strong>
+                        </li>
+                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                            <span style="color: var(--text-muted); display: block; margin-bottom: 5px;">Top 3 Estados:</span>
+                            <?php
+                                $top_e = array_slice($stats_extras['top_estados'], 0, 3);
+                                foreach($top_e as $e) echo "<span style='background: #E2E8F0; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; margin-right: 5px;'>{$e['estado']} ({$e['qtd']})</span>";
+                                if(empty($top_e)) echo "<span style='color: #94A3B8; font-size: 0.85rem;'>Nenhum dado</span>";
+                            ?>
+                        </li>
+                        <li style="padding: 8px 0;">
+                            <span style="color: var(--text-muted); display: block; margin-bottom: 5px;">Top 3 Cidades:</span>
+                            <?php
+                                $top_c = array_slice($stats_extras['top_cidades'], 0, 3);
+                                foreach($top_c as $c) echo "<span style='background: #E2E8F0; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; margin-right: 5px;'>{$c['cidade']} ({$c['qtd']})</span>";
+                                if(empty($top_c)) echo "<span style='color: #94A3B8; font-size: 0.85rem;'>Nenhum dado</span>";
+                            ?>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">4. Dispositivos, Tecnologia e Redes Sociais</h4>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; background: var(--bg-light); padding: 20px; border-radius: 8px;">
+                <div>
+                    <h5 style="margin-bottom: 10px; color: var(--text-dark);">Telas e Dispositivos</h5>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem;">
+                        <span><i class="fas fa-mobile-alt"></i> Mobile: <?php echo $stats_extras['devices']['Mobile']; ?></span>
+                        <strong><?php echo $stats_extras['perc_mobile']; ?>%</strong>
+                    </div>
+                    <div style="width: 100%; background: #E2E8F0; height: 8px; border-radius: 4px; margin-bottom: 15px;">
+                        <div style="width: <?php echo $stats_extras['perc_mobile']; ?>%; background: var(--primary); height: 100%; border-radius: 4px;"></div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem;">
+                        <span><i class="fas fa-desktop"></i> Desktop: <?php echo $stats_extras['devices']['Desktop']; ?></span>
+                        <strong><?php echo $stats_extras['perc_desktop']; ?>%</strong>
+                    </div>
+                    <div style="width: 100%; background: #E2E8F0; height: 8px; border-radius: 4px;">
+                        <div style="width: <?php echo $stats_extras['perc_desktop']; ?>%; background: var(--secondary); height: 100%; border-radius: 4px;"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <h5 style="margin-bottom: 10px; color: var(--text-dark);">Top Navegadores e SOs</h5>
+                    <ul style="font-size: 0.85rem; color: var(--text-muted); list-style: square; padding-left: 15px;">
+                        <?php
+                        foreach($stats_extras['top_browsers'] as $br => $qtd) echo "<li><strong>$br:</strong> $qtd acessos</li>";
+                        ?>
+                    </ul>
+                    <ul style="font-size: 0.85rem; color: var(--text-muted); list-style: square; padding-left: 15px; margin-top: 10px;">
+                        <?php
+                        foreach($stats_extras['top_oss'] as $os => $qtd) echo "<li><strong>$os:</strong> $qtd acessos</li>";
+                        ?>
+                    </ul>
+                </div>
+
+                <div>
+                    <h5 style="margin-bottom: 10px; color: var(--text-dark);">Origem Social (In-App)</h5>
+                    <ul style="font-size: 0.85rem; color: var(--text-muted); list-style: none; padding: 0;">
+                        <li style="margin-bottom: 5px;"><i class="fab fa-instagram" style="color: #E1306C;"></i> Instagram: <strong><?php echo $stats_extras['redes_sociais']['Instagram']; ?> acessos</strong></li>
+                        <li style="margin-bottom: 5px;"><i class="fab fa-facebook" style="color: #1877F2;"></i> Facebook: <strong><?php echo $stats_extras['redes_sociais']['Facebook']; ?> acessos</strong></li>
+                        <li style="margin-bottom: 5px;"><i class="fab fa-whatsapp" style="color: #25D366;"></i> WhatsApp Web: <strong><?php echo $stats_extras['redes_sociais']['WhatsApp']; ?> acessos</strong></li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px; font-size: 1.1rem; border-top: 2px solid var(--border-color); padding-top: 20px;">Últimos 100 Visitantes Individuais</h3>
             <table>
                 <thead>
                     <tr>

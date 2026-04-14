@@ -28,11 +28,8 @@ try {
     )";
     $pdo->exec($sql_online);
 
-    // Tenta atualizar a tabela caso seja antiga e não tenha as novas colunas
-    try { $pdo->exec("ALTER TABLE usuarios_online ADD COLUMN ip_address VARCHAR(45) AFTER ultimo_acesso"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE usuarios_online ADD COLUMN user_agent VARCHAR(255) AFTER ip_address"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE usuarios_online ADD COLUMN cidade VARCHAR(100) AFTER user_agent"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE usuarios_online ADD COLUMN estado VARCHAR(50) AFTER cidade"); } catch (PDOException $e) {}
+    // A checagem de ALTER TABLE foi executada anteriormente. Para otimização de performance,
+    // evitamos rodar DDL queries a cada load no ambiente de produção.
 
     // Cria a tabela de histórico de acessos (permanente)
     $sql_historico = "CREATE TABLE IF NOT EXISTS historico_acessos (
@@ -45,10 +42,6 @@ try {
         data_acesso TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     $pdo->exec($sql_historico);
-
-    // Tenta atualizar a tabela histórico caso seja antiga
-    try { $pdo->exec("ALTER TABLE historico_acessos ADD COLUMN cidade VARCHAR(100) AFTER user_agent"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE historico_acessos ADD COLUMN estado VARCHAR(50) AFTER cidade"); } catch (PDOException $e) {}
 
 } catch (PDOException $e) {
     die("Erro de conexão com o banco de dados: " . $e->getMessage());
