@@ -379,9 +379,37 @@ function getOSName($user_agent) {
         .btn-danger { background: #EF4444; padding: 8px 12px; font-size: 0.8rem; }
         .btn-danger:hover { background: #DC2626; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        /* Table Wrapper to allow horizontal scrolling on mobile */
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; min-width: 600px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #E2E8F0; }
         th { background: #F1F5F9; font-weight: 600; }
+
+        /* Estilos Responsivos (Mobile) */
+        @media (max-width: 992px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; padding: 15px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+            .sidebar h2 { grid-column: 1 / -1; margin-bottom: 15px; }
+            .sidebar > div { grid-column: 1 / -1; margin-bottom: 10px !important; }
+            .sidebar a { padding: 10px 15px; border-left: none; border-bottom: 4px solid transparent; text-align: center; border-radius: 8px; background: #1E293B; }
+            .sidebar a:hover, .sidebar a.active { border-left-color: transparent; border-bottom-color: var(--primary); background: #334155; }
+
+            .main-content { padding: 15px; }
+            h1 { font-size: 1.5rem; text-align: center; }
+
+            /* Ajuste de grids internos */
+            .card [style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important;
+                gap: 15px !important;
+            }
+
+            /* Ajustes para o cabeçalho dos dashboards para evitar quebra de botões */
+            .card [style*="display: flex; justify-content: space-between"] {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -502,26 +530,28 @@ function getOSName($user_agent) {
             </form>
 
             <h3 style="margin-top: 40px;">Documentos Disponíveis no Site</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Arquivo</th>
-                        <th>Ação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach($documentos as $doc): ?>
-                    <tr id="doc-<?php echo $doc['id']; ?>">
-                        <td><i class="<?php echo htmlspecialchars($doc['icone']); ?>"></i> <?php echo htmlspecialchars($doc['nome']); ?></td>
-                        <td><a href="<?php echo htmlspecialchars($doc['caminho_arquivo']); ?>" target="_blank" style="color: var(--primary); font-weight: 600;">Ver Arquivo</a></td>
-                        <td>
-                            <button onclick="excluirDoc(<?php echo $doc['id']; ?>)" class="btn btn-danger"><i class="fas fa-trash"></i> Excluir</button>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Arquivo</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach($documentos as $doc): ?>
+                        <tr id="doc-<?php echo $doc['id']; ?>">
+                            <td><i class="<?php echo htmlspecialchars($doc['icone']); ?>"></i> <?php echo htmlspecialchars($doc['nome']); ?></td>
+                            <td><a href="<?php echo htmlspecialchars($doc['caminho_arquivo']); ?>" target="_blank" style="color: var(--primary); font-weight: 600;">Ver Arquivo</a></td>
+                            <td>
+                                <button onclick="excluirDoc(<?php echo $doc['id']; ?>)" class="btn btn-danger"><i class="fas fa-trash"></i> Excluir</button>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="card admin-section" id="mural" style="display: none;">
@@ -549,26 +579,28 @@ function getOSName($user_agent) {
             </form>
 
             <h3 style="margin-top: 40px;">Atualizações Publicadas</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Título</th>
-                        <th>Ação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach($atualizacoes as $up): ?>
-                    <tr id="linha-<?php echo $up['id']; ?>">
-                        <td><?php echo date('d/m/Y', strtotime($up['data_publicacao'])); ?></td>
-                        <td><?php echo htmlspecialchars($up['titulo']); ?></td>
-                        <td>
-                            <button onclick="excluirAtualizacao(<?php echo $up['id']; ?>)" class="btn btn-danger"><i class="fas fa-trash"></i> Excluir</button>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Título</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach($atualizacoes as $up): ?>
+                        <tr id="linha-<?php echo $up['id']; ?>">
+                            <td><?php echo date('d/m/Y', strtotime($up['data_publicacao'])); ?></td>
+                            <td><?php echo htmlspecialchars($up['titulo']); ?></td>
+                            <td>
+                                <button onclick="excluirAtualizacao(<?php echo $up['id']; ?>)" class="btn btn-danger"><i class="fas fa-trash"></i> Excluir</button>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="card admin-section" id="midia" style="display: none;">
@@ -603,35 +635,37 @@ function getOSName($user_agent) {
             </form>
 
             <h3 style="margin-top: 40px; font-size: 1.1rem;">Itens da Galeria</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Tipo</th>
-                        <th>Prévia</th>
-                        <th>Ação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $stmtGaleria = $pdo->query("SELECT * FROM galeria ORDER BY id DESC");
-                    while($item = $stmtGaleria->fetch(PDO::FETCH_ASSOC)):
-                    ?>
-                    <tr id="gal-<?php echo $item['id']; ?>">
-                        <td><i class="fas <?php echo $item['tipo'] == 'video' ? 'fa-play-circle text-danger' : 'fa-image text-primary'; ?>"></i> <?php echo ucfirst($item['tipo']); ?></td>
-                        <td>
-                            <?php if($item['tipo'] == 'video'): ?>
-                                <a href="https://youtube.com/watch?v=<?php echo htmlspecialchars($item['midia_url']); ?>" target="_blank" style="color:var(--primary);">Ver Vídeo</a>
-                            <?php else: ?>
-                                <img src="<?php echo htmlspecialchars($item['midia_url']); ?>" style="max-height: 40px; border-radius: 4px;">
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <button onclick="excluirGaleria(<?php echo $item['id']; ?>)" class="btn btn-danger" style="padding: 5px 10px;"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Prévia</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $stmtGaleria = $pdo->query("SELECT * FROM galeria ORDER BY id DESC");
+                        while($item = $stmtGaleria->fetch(PDO::FETCH_ASSOC)):
+                        ?>
+                        <tr id="gal-<?php echo $item['id']; ?>">
+                            <td><i class="fas <?php echo $item['tipo'] == 'video' ? 'fa-play-circle text-danger' : 'fa-image text-primary'; ?>"></i> <?php echo ucfirst($item['tipo']); ?></td>
+                            <td>
+                                <?php if($item['tipo'] == 'video'): ?>
+                                    <a href="https://youtube.com/watch?v=<?php echo htmlspecialchars($item['midia_url']); ?>" target="_blank" style="color:var(--primary);">Ver Vídeo</a>
+                                <?php else: ?>
+                                    <img src="<?php echo htmlspecialchars($item['midia_url']); ?>" style="max-height: 40px; border-radius: 4px;">
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <button onclick="excluirGaleria(<?php echo $item['id']; ?>)" class="btn btn-danger" style="padding: 5px 10px;"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="card admin-section" id="videos-medico-admin" style="display: none;">
@@ -656,75 +690,79 @@ function getOSName($user_agent) {
             </form>
 
             <h3 style="margin-top: 40px; font-size: 1.1rem;">Vídeos do Médico Cadastrados</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Título</th>
-                        <th>Vídeo</th>
-                        <th>Ação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    try {
-                        $stmtVideosMedico = $pdo->query("SELECT * FROM videos_medico ORDER BY id DESC");
-                        while($item = $stmtVideosMedico->fetch(PDO::FETCH_ASSOC)):
-                    ?>
-                    <tr id="video-medico-<?php echo $item['id']; ?>">
-                        <td><?php echo htmlspecialchars($item['titulo']); ?></td>
-                        <td><a href="https://youtube.com/watch?v=<?php echo htmlspecialchars($item['video_id']); ?>" target="_blank" style="color:var(--primary);"><i class="fas fa-external-link-alt"></i> Ver Vídeo</a></td>
-                        <td>
-                            <button onclick="excluirVideoMedico(<?php echo $item['id']; ?>)" class="btn btn-danger" style="padding: 5px 10px;"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                    <?php
-                        endwhile;
-                    } catch (Exception $e) {
-                        echo "<tr><td colspan='3'>Erro ao carregar vídeos: " . $e->getMessage() . "</td></tr>";
-                    }
-                    ?>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Vídeo</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        try {
+                            $stmtVideosMedico = $pdo->query("SELECT * FROM videos_medico ORDER BY id DESC");
+                            while($item = $stmtVideosMedico->fetch(PDO::FETCH_ASSOC)):
+                        ?>
+                        <tr id="video-medico-<?php echo $item['id']; ?>">
+                            <td><?php echo htmlspecialchars($item['titulo']); ?></td>
+                            <td><a href="https://youtube.com/watch?v=<?php echo htmlspecialchars($item['video_id']); ?>" target="_blank" style="color:var(--primary);"><i class="fas fa-external-link-alt"></i> Ver Vídeo</a></td>
+                            <td>
+                                <button onclick="excluirVideoMedico(<?php echo $item['id']; ?>)" class="btn btn-danger" style="padding: 5px 10px;"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <?php
+                            endwhile;
+                        } catch (Exception $e) {
+                            echo "<tr><td colspan='3'>Erro ao carregar vídeos: " . $e->getMessage() . "</td></tr>";
+                        }
+                        ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="card admin-section" id="usuarios-online-admin" style="display: none;">
             <h3><i class="fas fa-users"></i> Pessoas no Site Agora</h3>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Esta lista mostra quem está navegando no site nos últimos 5 minutos. Bots conhecidos (como rastreadores do Google ou WhatsApp) são filtrados automaticamente.</p>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>IP</th>
-                        <th>Localização</th>
-                        <th>Sistema / Dispositivo</th>
-                        <th>Navegador</th>
-                        <th>Último Acesso</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if(count($lista_usuarios_online) > 0): ?>
-                        <?php foreach($lista_usuarios_online as $user): ?>
+            <div class="table-responsive">
+                <table>
+                    <thead>
                         <tr>
-                            <td style="font-family: monospace; color: var(--primary);"><?php echo htmlspecialchars($user['ip_address'] ?: 'Desconhecido'); ?></td>
-                            <td>
-                                <?php
-                                    if(!empty($user['cidade']) && !empty($user['estado'])) {
-                                        echo htmlspecialchars($user['cidade'] . ' - ' . $user['estado']);
-                                    } else {
-                                        echo 'Desconhecida';
-                                    }
-                                ?>
-                            </td>
-                            <td><?php echo getOSName($user['user_agent']); ?></td>
-                            <td><?php echo getBrowserName($user['user_agent']); ?></td>
-                            <td><?php echo date('d/m/Y H:i:s', strtotime($user['ultimo_acesso'])); ?></td>
+                            <th>IP</th>
+                            <th>Localização</th>
+                            <th>Sistema / Dispositivo</th>
+                            <th>Navegador</th>
+                            <th>Último Acesso</th>
                         </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr><td colspan='5' style="text-align: center; color: var(--text-muted);">Nenhuma pessoa online no momento.</td></tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php if(count($lista_usuarios_online) > 0): ?>
+                            <?php foreach($lista_usuarios_online as $user): ?>
+                            <tr>
+                                <td style="font-family: monospace; color: var(--primary);"><?php echo htmlspecialchars($user['ip_address'] ?: 'Desconhecido'); ?></td>
+                                <td>
+                                    <?php
+                                        if(!empty($user['cidade']) && !empty($user['estado'])) {
+                                            echo htmlspecialchars($user['cidade'] . ' - ' . $user['estado']);
+                                        } else {
+                                            echo 'Desconhecida';
+                                        }
+                                    ?>
+                                </td>
+                                <td><?php echo getOSName($user['user_agent']); ?></td>
+                                <td><?php echo getBrowserName($user['user_agent']); ?></td>
+                                <td><?php echo date('d/m/Y H:i:s', strtotime($user['ultimo_acesso'])); ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr><td colspan='5' style="text-align: center; color: var(--text-muted);">Nenhuma pessoa online no momento.</td></tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="card admin-section" id="historico-doacoes-admin" style="display: none;">
@@ -795,28 +833,30 @@ function getOSName($user_agent) {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
                 <div>
                     <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Top 5 Doadores (Volume Total)</h4>
-                    <table style="width: 100%;">
-                        <thead>
-                            <tr>
-                                <th>Doador</th>
-                                <th style="text-align: center;">Nº de Doações</th>
-                                <th style="text-align: right;">Total Doado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if(count($top_5_doadores) > 0): ?>
-                                <?php foreach($top_5_doadores as $nome => $dados): ?>
+                    <div class="table-responsive">
+                        <table style="width: 100%;">
+                            <thead>
                                 <tr>
-                                    <td><strong><?php echo htmlspecialchars($nome); ?></strong></td>
-                                    <td style="text-align: center;"><?php echo $dados['qtd']; ?></td>
-                                    <td style="text-align: right; color: var(--success); font-weight: 600;">R$ <?php echo number_format($dados['total'], 2, ',', '.'); ?></td>
+                                    <th>Doador</th>
+                                    <th style="text-align: center;">Nº de Doações</th>
+                                    <th style="text-align: right;">Total Doado</th>
                                 </tr>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <tr><td colspan="3" style="text-align: center;">Nenhuma doação registrada.</td></tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <?php if(count($top_5_doadores) > 0): ?>
+                                    <?php foreach($top_5_doadores as $nome => $dados): ?>
+                                    <tr>
+                                        <td><strong><?php echo htmlspecialchars($nome); ?></strong></td>
+                                        <td style="text-align: center;"><?php echo $dados['qtd']; ?></td>
+                                        <td style="text-align: right; color: var(--success); font-weight: 600;">R$ <?php echo number_format($dados['total'], 2, ',', '.'); ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr><td colspan="3" style="text-align: center;">Nenhuma doação registrada.</td></tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div>
@@ -1010,7 +1050,7 @@ function getOSName($user_agent) {
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="admin.js"></script>
+    <script src="admin.js?v=1.1"></script>
 
     <script>
         // Dados PHP para o JS

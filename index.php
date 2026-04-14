@@ -61,7 +61,7 @@ try {
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="gi.css">
+    <link rel="stylesheet" href="gi.css?v=1.1">
 </head>
 <body style="overflow-x: hidden; width: 100%;">
 
@@ -488,6 +488,6 @@ try {
         </div>
     </div>
 
-    <script src="gi.js"></script>
+    <script src="gi.js?v=1.1"></script>
 </body>
 </html>
