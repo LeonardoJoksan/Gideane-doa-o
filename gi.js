@@ -47,8 +47,9 @@ document.addEventListener("DOMContentLoaded", () => {
      // --- Lógica do Countdown (Contagem regressiva) ---
      const countdownEl = document.getElementById('countdown-urgency');
      if (countdownEl) {
-          // Data alvo: 08/04/2026 00:00:00
-          const targetDate = new Date("2026-04-08T00:00:00").getTime();
+          // Data alvo: 4 semanas após 08/04/2026 00:00:00
+          const startDate = new Date("2026-04-08T00:00:00").getTime();
+          const targetDate = startDate + (4 * 7 * 24 * 60 * 60 * 1000); // 4 semanas em milissegundos
 
           function updateCountdown() {
                const now = new Date().getTime();
