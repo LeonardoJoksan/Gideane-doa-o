@@ -133,7 +133,7 @@ switch ($acao) {
         $tipo = $_POST['midia_tipo'] ?? 'imagem';
         $midia_url = '';
 
-        if ($tipo === 'video' || $tipo === 'video_medico') {
+        if ($tipo === 'video') {
             $midia_url = $_POST['midia_video_id'] ?? '';
             if(empty($midia_url)) {
                 echo json_encode(['status' => 'error', 'message' => 'Cole o ID do vídeo do YouTube.']);
@@ -179,6 +179,32 @@ switch ($acao) {
             }
             $pdo->prepare("DELETE FROM galeria WHERE id = :id")->execute([':id' => $id]);
             echo json_encode(['status' => 'success']);
+        }
+        break;
+
+    case 'adicionar_video_medico':
+        $titulo = $_POST['titulo_video'] ?? '';
+        $video_id = $_POST['youtube_id'] ?? '';
+
+        if(empty($titulo) || empty($video_id)) {
+            echo json_encode(['status' => 'error', 'message' => 'Preencha todos os campos.']);
+            exit;
+        }
+
+        $stmt = $pdo->prepare("INSERT INTO videos_medico (titulo, video_id) VALUES (:titulo, :video_id)");
+        if($stmt->execute([':titulo' => $titulo, ':video_id' => $video_id])) {
+            echo json_encode(['status' => 'success', 'message' => 'Vídeo adicionado com sucesso!']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Erro ao salvar no banco.']);
+        }
+        break;
+
+    case 'excluir_video_medico':
+        $id = $_POST['id'];
+        if($pdo->prepare("DELETE FROM videos_medico WHERE id = :id")->execute([':id' => $id])) {
+            echo json_encode(['status' => 'success']);
+        } else {
+            echo json_encode(['status' => 'error']);
         }
         break;
 

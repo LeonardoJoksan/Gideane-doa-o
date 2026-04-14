@@ -112,7 +112,7 @@ $(document).ready(function () {
 
      // 4. Alternar campos de imagem/vídeo na Galeria
      $('input[name="midia_tipo"]').on('change', function () {
-          if ($(this).val() === 'video' || $(this).val() === 'video_medico') {
+          if ($(this).val() === 'video') {
                $('.campo-video').fadeIn();
                $('.campo-imagem').fadeOut();
           } else {
@@ -133,6 +133,26 @@ $(document).ready(function () {
                dataType: 'json',
                processData: false,
                contentType: false,
+               success: function (response) {
+                    if (response.status === 'success') {
+                         Swal.fire('Adicionado!', response.message, 'success').then(() => location.reload());
+                    } else {
+                         Swal.fire('Erro!', response.message, 'error');
+                    }
+               }
+          });
+     });
+
+     // Adicionar Vídeo do Médico
+     $('#formVideoMedico').on('submit', function (e) {
+          e.preventDefault();
+          let formData = $(this).serialize();
+
+          $.ajax({
+               url: 'acoes.php',
+               type: 'POST',
+               data: formData,
+               dataType: 'json',
                success: function (response) {
                     if (response.status === 'success') {
                          Swal.fire('Adicionado!', response.message, 'success').then(() => location.reload());
@@ -209,6 +229,24 @@ function excluirAtualizacao(id) {
                          }
                     }
                });
+          }
+     });
+}
+
+function excluirVideoMedico(id) {
+     Swal.fire({
+          title: 'Excluir vídeo do médico?',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#EF4444',
+          confirmButtonText: 'Sim'
+     }).then((result) => {
+          if (result.isConfirmed) {
+               $.post('acoes.php', { acao: 'excluir_video_medico', id: id }, function (res) {
+                    if (res.status === 'success') {
+                         $('#video-medico-' + id).fadeOut();
+                    }
+               }, 'json');
           }
      });
 }

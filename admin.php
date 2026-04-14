@@ -82,6 +82,7 @@ $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
         <a href="#transparencia" class="nav-link"><i class="fas fa-file-medical"></i> Transparência</a>
         <a href="#mural" class="nav-link"><i class="fas fa-bullhorn"></i> Mural</a>
         <a href="#midia" class="nav-link"><i class="fas fa-images"></i> Galeria</a>
+        <a href="#videos-medico-admin" class="nav-link"><i class="fas fa-user-md"></i> Vídeos Médico</a>
         <a href="index.php" target="_blank"><i class="fas fa-external-link-alt"></i> Ver Site</a>
         <a href="?sair=1" class="logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
     </div>
@@ -259,7 +260,6 @@ $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
                     <div style="display: flex; gap: 20px; margin-top: 10px;">
                         <label><input type="radio" name="midia_tipo" value="imagem" checked> Nova Imagem (Foto)</label>
                         <label><input type="radio" name="midia_tipo" value="video"> Novo Vídeo (YouTube)</label>
-                        <label><input type="radio" name="midia_tipo" value="video_medico"> Novo Vídeo do Médico (YouTube)</label>
                     </div>
                 </div>
 
@@ -294,9 +294,9 @@ $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
                     while($item = $stmtGaleria->fetch(PDO::FETCH_ASSOC)):
                     ?>
                     <tr id="gal-<?php echo $item['id']; ?>">
-                        <td><i class="fas <?php echo ($item['tipo'] == 'video' || $item['tipo'] == 'video_medico') ? 'fa-play-circle text-danger' : 'fa-image text-primary'; ?>"></i> <?php echo ucfirst(str_replace('_', ' do ', $item['tipo'])); ?></td>
+                        <td><i class="fas <?php echo $item['tipo'] == 'video' ? 'fa-play-circle text-danger' : 'fa-image text-primary'; ?>"></i> <?php echo ucfirst($item['tipo']); ?></td>
                         <td>
-                            <?php if($item['tipo'] == 'video' || $item['tipo'] == 'video_medico'): ?>
+                            <?php if($item['tipo'] == 'video'): ?>
                                 <a href="https://youtube.com/watch?v=<?php echo htmlspecialchars($item['midia_url']); ?>" target="_blank" style="color:var(--primary);">Ver Vídeo</a>
                             <?php else: ?>
                                 <img src="<?php echo htmlspecialchars($item['midia_url']); ?>" style="max-height: 40px; border-radius: 4px;">
@@ -307,6 +307,59 @@ $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
                         </td>
                     </tr>
                     <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card admin-section" id="videos-medico-admin" style="display: none;">
+            <h3><i class="fas fa-user-md"></i> Vídeos do Médico</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Adicione os vídeos explicativos do médico. Eles aparecerão em uma seção especial estilo FAQ na página principal.</p>
+
+            <form id="formVideoMedico">
+                <input type="hidden" name="acao" value="adicionar_video_medico">
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>Título / Pergunta do Vídeo</label>
+                        <input type="text" name="titulo_video" placeholder="Ex: Por que a cirurgia tem que ser feita em 4 semanas?" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ID do Vídeo do YouTube</label>
+                        <input type="text" name="youtube_id" placeholder="Ex: dQw4w9WgXcQ" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn"><i class="fas fa-plus"></i> Adicionar Vídeo</button>
+            </form>
+
+            <h3 style="margin-top: 40px; font-size: 1.1rem;">Vídeos do Médico Cadastrados</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Vídeo</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    try {
+                        $stmtVideosMedico = $pdo->query("SELECT * FROM videos_medico ORDER BY id DESC");
+                        while($item = $stmtVideosMedico->fetch(PDO::FETCH_ASSOC)):
+                    ?>
+                    <tr id="video-medico-<?php echo $item['id']; ?>">
+                        <td><?php echo htmlspecialchars($item['titulo']); ?></td>
+                        <td><a href="https://youtube.com/watch?v=<?php echo htmlspecialchars($item['video_id']); ?>" target="_blank" style="color:var(--primary);"><i class="fas fa-external-link-alt"></i> Ver Vídeo</a></td>
+                        <td>
+                            <button onclick="excluirVideoMedico(<?php echo $item['id']; ?>)" class="btn btn-danger" style="padding: 5px 10px;"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    <?php
+                        endwhile;
+                    } catch (Exception $e) {
+                        echo "<tr><td colspan='3'>Erro ao carregar vídeos: " . $e->getMessage() . "</td></tr>";
+                    }
+                    ?>
                 </tbody>
             </table>
         </div>

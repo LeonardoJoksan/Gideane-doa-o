@@ -28,16 +28,15 @@ $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
 
 // Busca a galeria de mídias dinâmicas
 $stmtGaleria = $pdo->query("SELECT * FROM galeria ORDER BY id DESC");
-$galeriaAll = $stmtGaleria->fetchAll(PDO::FETCH_ASSOC);
+$galeria = $stmtGaleria->fetchAll(PDO::FETCH_ASSOC);
 
-$galeria = [];
+// Busca os vídeos do médico
 $videos_medico = [];
-foreach($galeriaAll as $item) {
-    if ($item['tipo'] == 'video_medico') {
-        $videos_medico[] = $item;
-    } else {
-        $galeria[] = $item;
-    }
+try {
+    $stmtVideosMedico = $pdo->query("SELECT * FROM videos_medico ORDER BY id DESC");
+    $videos_medico = $stmtVideosMedico->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    // Tabela pode não existir no primeiro carregamento, ignora erro silenciosamente no frontend
 }
 ?>
 <!DOCTYPE html>
@@ -138,14 +137,24 @@ foreach($galeriaAll as $item) {
     </header>
 
     <?php if (count($videos_medico) > 0): ?>
-    <section class="section destaque-medico" id="videos-medico">
-        <div class="container">
-            <h2 class="section-title text-center" style="color: white; margin-bottom: 8px;">Opinião do Especialista</h2>
-            <p class="section-subtitle text-center" style="color: #94A3B8; margin-bottom: 40px;">Vídeos explicativos sobre a gravidade e urgência da Braquiterapia Ocular.</p>
-            <div class="videos-medico-grid">
+    <section class="section bg-light" id="videos-medico">
+        <div class="container max-w-800">
+            <h2 class="section-title text-center">Tire suas Dúvidas com o Especialista</h2>
+            <p class="section-subtitle text-center">Vídeos explicativos sobre a gravidade e urgência da Braquiterapia Ocular.</p>
+
+            <div class="faq-container">
                 <?php foreach($videos_medico as $video): ?>
-                <div class="video-card">
-                    <iframe src="https://www.youtube.com/embed/<?php echo htmlspecialchars($video['midia_url']); ?>?modestbranding=1&rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen title="Vídeo Explicativo do Médico" style="width: 100%; aspect-ratio: 16/9; display: block; border: none;"></iframe>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <i class="fas fa-play-circle" style="color: var(--secondary); margin-right: 10px;"></i>
+                        <?php echo htmlspecialchars($video['titulo']); ?>
+                        <i class="fas fa-chevron-down" style="margin-left: auto;"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <div style="padding-top: 15px; padding-bottom: 15px;">
+                            <iframe src="https://www.youtube.com/embed/<?php echo htmlspecialchars($video['video_id']); ?>?modestbranding=1&rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen title="Vídeo Explicativo do Médico" style="width: 100%; aspect-ratio: 16/9; display: block; border-radius: 8px; box-shadow: var(--shadow-md);"></iframe>
+                        </div>
+                    </div>
                 </div>
                 <?php endforeach; ?>
             </div>
@@ -153,7 +162,7 @@ foreach($galeriaAll as $item) {
     </section>
     <?php endif; ?>
 
-    <section class="section <?php echo count($videos_medico) > 0 ? '' : 'bg-light'; ?>" id="historia">
+    <section class="section <?php echo count($videos_medico) > 0 ? 'bg-white' : 'bg-light'; ?>" id="historia">
         <div class="container max-w-800">
             <h2 class="section-title text-center">A Nossa Corrida Pela Vida</h2>
             
