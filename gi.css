@@ -461,9 +461,31 @@ body {
      box-shadow: var(--shadow-lg);
 }
 
+.destaque-doar {
+     background: linear-gradient(135deg, var(--secondary) 0%, #1E3A8A 100%);
+     color: white;
+     padding: 120px 0;
+     position: relative;
+}
+
+.destaque-doar::before {
+     content: '';
+     position: absolute;
+     top: 0; left: 0; right: 0; bottom: 0;
+     background: url('https://www.transparenttextures.com/patterns/cubes.png');
+     opacity: 0.1;
+     pointer-events: none;
+}
+
 .highlight-card {
-     border: 2px solid var(--secondary);
-     box-shadow: 0 10px 25px rgba(14, 165, 233, 0.15);
+     border: 2px solid var(--accent);
+     box-shadow: 0 10px 25px rgba(249, 115, 22, 0.3);
+     transform: scale(1.05);
+     z-index: 2;
+}
+
+.highlight-card:hover {
+     transform: scale(1.08) translateY(-8px);
 }
 
 .card-badge {
@@ -996,7 +1018,8 @@ body {
 }
 
 /* Marca d'água da Medalha */
-.highlight-gold .medal-icon {
+.highlight-gold .medal-icon,
+.highlight-diamond .medal-icon {
      font-size: 5rem !important;
      color: #FBBF24 !important;
      position: absolute;
@@ -1008,10 +1031,65 @@ body {
      pointer-events: none;
 }
 
+.highlight-diamond .medal-icon {
+     color: #BAE6FD !important;
+}
+
 .highlight-gold h3,
-.highlight-gold p {
+.highlight-gold p,
+.highlight-diamond h3,
+.highlight-diamond p {
      position: relative;
      z-index: 1;
+}
+
+/* O Cartão Diamante (Super Doações >= 500) */
+.highlight-diamond {
+     border-radius: 16px !important;
+     background-image: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 25%, #F0FDF4 50%, #E0F2FE 75%, #F0F9FF 100%) !important;
+     background-color: #F0F9FF !important;
+     background-size: 300% 300% !important;
+     border: 2px solid #38BDF8 !important;
+     position: relative;
+     overflow: hidden;
+     animation: brilhoFundo 6s ease infinite, pulsoSombraDiamond 2s infinite alternate !important;
+}
+
+/* Bolinha diamante na linha do tempo */
+.dot-diamond {
+     background: #0284C7 !important;
+     box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.3) !important;
+     border-color: white !important;
+}
+
+/* Textos e Valores Diamante */
+.highlight-diamond h3 {
+     color: #075985 !important;
+     font-weight: 700 !important;
+     font-size: 1.2rem !important;
+}
+
+.highlight-diamond p {
+     color: #0C4A6E !important;
+}
+
+.highlight-diamond p strong {
+     font-size: 1.3rem !important;
+     color: #0369A1 !important;
+     font-weight: 800 !important;
+     background: rgba(186, 230, 253, 0.5) !important;
+     padding: 2px 6px !important;
+     border-radius: 4px !important;
+}
+
+@keyframes pulsoSombraDiamond {
+     0% {
+          box-shadow: 0 4px 15px rgba(2, 132, 199, 0.2);
+     }
+
+     100% {
+          box-shadow: 0 8px 25px rgba(2, 132, 199, 0.5);
+     }
 }
 
 @keyframes brilhoFundo {

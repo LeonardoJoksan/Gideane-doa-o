@@ -28,7 +28,17 @@ $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
 
 // Busca a galeria de mídias dinâmicas
 $stmtGaleria = $pdo->query("SELECT * FROM galeria ORDER BY id DESC");
-$galeria = $stmtGaleria->fetchAll(PDO::FETCH_ASSOC);
+$galeriaAll = $stmtGaleria->fetchAll(PDO::FETCH_ASSOC);
+
+$galeria = [];
+$videos_medico = [];
+foreach($galeriaAll as $item) {
+    if ($item['tipo'] == 'video_medico') {
+        $videos_medico[] = $item;
+    } else {
+        $galeria[] = $item;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -59,7 +69,7 @@ $galeria = $stmtGaleria->fetchAll(PDO::FETCH_ASSOC);
     <header class="hero">
         <div class="container hero-wrapper">
             <div class="hero-content">
-                <span class="badge-urgency"><i class="fas fa-clock"></i> Faltam apenas 4 semanas</span>
+                <span class="badge-urgency" id="countdown-urgency"><i class="fas fa-clock"></i> Faltam apenas 4 semanas</span>
                 <h1>Ajude a Gi a Vencer o Câncer Ocular</h1>
                 <p>A Gideane precisa de uma <strong>Braquiterapia Ocular</strong> urgente para secar um tumor e salvar sua vida e visão. Cada doação é um passo rumo à cura.</p>
                 
@@ -127,7 +137,22 @@ $galeria = $stmtGaleria->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </header>
 
-    <section class="section bg-light" id="historia">
+    <?php if (count($videos_medico) > 0): ?>
+    <section class="section bg-light" id="videos-medico" style="padding-bottom: 50px;">
+        <div class="container max-w-800">
+            <h2 class="section-title text-center">Vídeos do médico</h2>
+            <div style="display: flex; flex-direction: column; gap: 30px; margin-top: 30px;">
+                <?php foreach($videos_medico as $video): ?>
+                <div style="width: 100%; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-md);">
+                    <iframe src="https://www.youtube.com/embed/<?php echo htmlspecialchars($video['midia_url']); ?>?modestbranding=1&rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="width: 100%; aspect-ratio: 16/9; display: block;"></iframe>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+    <?php endif; ?>
+
+    <section class="section <?php echo count($videos_medico) > 0 ? '' : 'bg-light'; ?>" id="historia">
         <div class="container max-w-800">
             <h2 class="section-title text-center">A Nossa Corrida Pela Vida</h2>
             
@@ -135,24 +160,28 @@ $galeria = $stmtGaleria->fetchAll(PDO::FETCH_ASSOC);
             
             <p class="paragraph">Sabendo da demora da rede pública, decidimos nos apertar financeiramente para realizar consultas e uma bateria de exames particulares com urgência (Mapeamento de Retina, Retinografia e Ultrassons Oculares de ambos os olhos). O resultado saiu no mesmo dia e caiu como uma bomba: foi identificada uma anomalia grave e fomos encaminhados imediatamente para um especialista em Oncologia Ocular.</p>
             
-            <p class="paragraph">Encontramos a <a href="https://clinicabelfort.com.br/equipe/dr-rubens-belfort-neto/" target="_blank" style="color: var(--secondary); font-weight: 600; text-decoration: underline;">Clínica Belfort</a>, onde fomos atendidos pelo Dr. Rubens Belfort. O diagnóstico foi duro: um <strong>Tumor Maligno de 6mm no olho</strong>. Infelizmente, não há chance de recuperar a visão perdida.</p>
+            <button id="btn-leia-mais" class="btn btn-outline" style="border-color: var(--secondary); color: var(--secondary); margin: 20px auto; display: block;">Leia mais <i class="fas fa-chevron-down"></i></button>
 
-            <p class="paragraph">O médico nos apresentou duas opções: a retirada total do globo ocular com implante de prótese, ou a <strong>Braquiterapia Ocular</strong> (a implantação de uma placa de radiação que seca o tumor e evita a remoção do olho). Como ambas têm praticamente o mesmo custo, optamos pela Braquiterapia, que oferece muito mais dignidade à Gi.</p>
-            
-            <div class="alert-card" style="display: block;">
-                <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px;">
-                    <div class="alert-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                    <div class="alert-text">
-                        <h3>As 3 únicas opções no Brasil e a nossa urgência</h3>
-                        <p>Essa cirurgia é altamente complexa e o tumor é agressivo. O médico foi claro: temos no máximo <strong>4 semanas</strong> para operar. No Brasil, existem apenas três caminhos:</p>
+            <div id="restante-historia" style="display: none;">
+                <p class="paragraph">Encontramos a <a href="https://clinicabelfort.com.br/equipe/dr-rubens-belfort-neto/" target="_blank" style="color: var(--secondary); font-weight: 600; text-decoration: underline;">Clínica Belfort</a>, onde fomos atendidos pelo Dr. Rubens Belfort. O diagnóstico foi duro: um <strong>Tumor Maligno de 6mm no olho</strong>. Infelizmente, não há chance de recuperar a visão perdida.</p>
+
+                <p class="paragraph">O médico nos apresentou duas opções: a retirada total do globo ocular com implante de prótese, ou a <strong>Braquiterapia Ocular</strong> (a implantação de uma placa de radiação que seca o tumor e evita a remoção do olho). Como ambas têm praticamente o mesmo custo, optamos pela Braquiterapia, que oferece muito mais dignidade à Gi.</p>
+
+                <div class="alert-card" style="display: block;">
+                    <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px;">
+                        <div class="alert-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                        <div class="alert-text">
+                            <h3>As 3 únicas opções no Brasil e a nossa urgência</h3>
+                            <p>Essa cirurgia é altamente complexa e o tumor é agressivo. O médico foi claro: temos no máximo <strong>4 semanas</strong> para operar. No Brasil, existem apenas três caminhos:</p>
+                        </div>
                     </div>
+
+                    <ul style="padding-left: 20px; color: #7F1D1D; font-size: 0.95rem; line-height: 1.6;">
+                        <li style="margin-bottom: 12px;"><strong>1. Pelo SUS (em Barretos):</strong> A fila de espera ultrapassa 6 meses. Infelizmente, não temos esse tempo.</li>
+                        <li style="margin-bottom: 12px;"><strong>2. Hospital A.C.Camargo:</strong> O custo seria o mesmo, mas a equipe do cirurgião escolhido não é focada exclusivamente nesta especialidade.</li>
+                        <li><strong>3. Hospital Albert Einstein:</strong> A cirurgia será realizada pela equipe do Dr. Rubens, referência no assunto. Esta é a nossa única opção viável e segura dentro do prazo que temos.</li>
+                    </ul>
                 </div>
-                
-                <ul style="padding-left: 20px; color: #7F1D1D; font-size: 0.95rem; line-height: 1.6;">
-                    <li style="margin-bottom: 12px;"><strong>1. Pelo SUS (em Barretos):</strong> A fila de espera ultrapassa 6 meses. Infelizmente, não temos esse tempo.</li>
-                    <li style="margin-bottom: 12px;"><strong>2. Hospital A.C.Camargo:</strong> O custo seria o mesmo, mas a equipe do cirurgião escolhido não é focada exclusivamente nesta especialidade.</li>
-                    <li><strong>3. Hospital Albert Einstein:</strong> A cirurgia será realizada pela equipe do Dr. Rubens, referência no assunto. Esta é a nossa única opção viável e segura dentro do prazo que temos.</li>
-                </ul>
             </div>
         </div>
 
@@ -253,9 +282,9 @@ $galeria = $stmtGaleria->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </section>
 
-    <section class="section bg-light" id="doar">
+    <section class="section destaque-doar" id="doar">
         <div class="container">
-            <h2 class="section-title text-center">Como você pode ajudar?</h2>
+            <h2 class="section-title text-center" style="color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Como você pode ajudar?</h2>
             <div class="grid cards-grid">
                 
                 <div class="card donate-card">
@@ -318,8 +347,9 @@ $galeria = $stmtGaleria->fetchAll(PDO::FETCH_ASSOC);
             <div class="timeline" id="timelineMural">
                 <?php if (count($atualizacoes) > 0): ?>
                     <?php 
-                    // Limite para brilhar (R$ 100,00)
+                    // Limites para brilhar
                     $limite_doacao_grande = 100.00; 
+                    $limite_diamante = 500.00;
                     
                     foreach ($atualizacoes as $index => $atualizacao): 
                         $dataObj = new DateTime($atualizacao['data_publicacao']);
@@ -327,13 +357,16 @@ $galeria = $stmtGaleria->fetchAll(PDO::FETCH_ASSOC);
                         
                         // LÓGICA PARA IDENTIFICAR DOAÇÃO GRANDE
                         $is_big_donation = false;
+                        $is_diamond_donation = false;
                         $valorStr = '';
                         if (preg_match('/doar R\$ ([0-9]+(?:\.[0-9]{3})*,[0-9]{2})/', $atualizacao['descricao'], $matches)) {
                             $valorStr = $matches[1];
                             $valorLimpo = str_replace('.', '', $valorStr);
                             $valorLimpo = str_replace(',', '.', $valorLimpo);
                             $valor = (float)$valorLimpo;
-                            if ($valor >= $limite_doacao_grande) {
+                            if ($valor >= $limite_diamante) {
+                                $is_diamond_donation = true;
+                            } elseif ($valor >= $limite_doacao_grande) {
                                 $is_big_donation = true;
                             }
                         }
@@ -348,24 +381,37 @@ $galeria = $stmtGaleria->fetchAll(PDO::FETCH_ASSOC);
 
                         // CLASSES CSS
                         $hide_class = ($index >= 10) ? 'hidden-update' : '';
-                        $gold_card_class = $is_big_donation ? 'highlight-gold' : '';
-                        $gold_dot_class = $is_big_donation ? 'dot-gold' : '';
+
+                        $card_class = '';
+                        $dot_class = '';
+                        $icon_html = '';
+                        $bg_icon_html = '';
+
+                        if ($is_diamond_donation) {
+                            $card_class = 'highlight-diamond';
+                            $dot_class = 'dot-diamond';
+                            $icon_html = '<i class="fas fa-gem" style="color: #0284C7; margin-right: 5px;"></i>';
+                            $bg_icon_html = '<i class="fas fa-gem medal-icon" style="color: #BAE6FD;"></i>';
+                        } elseif ($is_big_donation) {
+                            $card_class = 'highlight-gold';
+                            $dot_class = 'dot-gold';
+                            $icon_html = '<i class="fas fa-crown" style="color: #D97706; margin-right: 5px;"></i>';
+                            $bg_icon_html = '<i class="fas fa-medal medal-icon"></i>';
+                        }
                     ?>
                         
                         <div class="timeline-item timeline-entry <?php echo $hide_class; ?>">
-                            <div class="timeline-dot <?php echo $gold_dot_class; ?>"></div>
+                            <div class="timeline-dot <?php echo $dot_class; ?>"></div>
                             <div class="timeline-date"><?php echo $dataBR; ?></div>
                             
-                            <div class="timeline-content <?php echo $gold_card_class; ?>">
+                            <div class="timeline-content <?php echo $card_class; ?>">
                                 <h3>
-                                    <?php if($is_big_donation): ?>
-                                        <i class="fas fa-crown" style="color: #D97706; margin-right: 5px;"></i>
-                                    <?php endif; ?>
+                                    <?php echo $icon_html; ?>
                                     <?php echo htmlspecialchars($atualizacao['titulo']); ?>
                                 </h3>
                                 
                                 <p>
-                                    <?php if($is_big_donation): ?>
+                                    <?php if($is_big_donation || $is_diamond_donation): ?>
                                         <?php 
                                             $destaque_valor = '<strong>R$ ' . $valorStr . ' ' . $metodo_badge . '</strong>';
                                             $descricao_destacada = str_replace('R$ ' . $valorStr, $destaque_valor, $atualizacao['descricao']);
@@ -373,7 +419,7 @@ $galeria = $stmtGaleria->fetchAll(PDO::FETCH_ASSOC);
                                             $descricao_destacada = str_ireplace(['via pix', 'pelo pix', 'via mercado pago', 'pelo mercado pago'], '', $descricao_destacada);
                                             echo nl2br($descricao_destacada);
                                         ?>
-                                        <i class="fas fa-medal medal-icon"></i>
+                                        <?php echo $bg_icon_html; ?>
                                     <?php else: ?>
                                         <?php 
                                             // Se não for doação grande, ainda tenta colocar o badge se achar as palavras

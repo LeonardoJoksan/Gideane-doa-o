@@ -31,6 +31,45 @@ document.addEventListener("DOMContentLoaded", () => {
                answer.classList.toggle('open');
           });
      });
+
+     // --- Lógica "Leia mais" na História ---
+     const btnLeiaMais = document.getElementById('btn-leia-mais');
+     const restanteHistoria = document.getElementById('restante-historia');
+
+     if (btnLeiaMais && restanteHistoria) {
+          btnLeiaMais.addEventListener('click', () => {
+               restanteHistoria.style.display = 'block';
+               restanteHistoria.style.animation = 'fadeInUp 0.6s ease forwards';
+               btnLeiaMais.style.display = 'none';
+          });
+     }
+
+     // --- Lógica do Countdown (Contagem regressiva) ---
+     const countdownEl = document.getElementById('countdown-urgency');
+     if (countdownEl) {
+          // Data alvo: 08/04/2026 00:00:00
+          const targetDate = new Date("2026-04-08T00:00:00").getTime();
+
+          function updateCountdown() {
+               const now = new Date().getTime();
+               const distance = targetDate - now;
+
+               if (distance < 0) {
+                    countdownEl.innerHTML = '<i class="fas fa-clock"></i> O prazo terminou';
+                    return;
+               }
+
+               const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+               const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+               const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+               const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+               countdownEl.innerHTML = `<i class="fas fa-clock"></i> Faltam: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+          }
+
+          updateCountdown(); // Call immediately
+          setInterval(updateCountdown, 1000); // Update every second
+     }
 });
 
 // ----------------------------------------------------

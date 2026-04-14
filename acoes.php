@@ -133,7 +133,7 @@ switch ($acao) {
         $tipo = $_POST['midia_tipo'] ?? 'imagem';
         $midia_url = '';
 
-        if ($tipo === 'video') {
+        if ($tipo === 'video' || $tipo === 'video_medico') {
             $midia_url = $_POST['midia_video_id'] ?? '';
             if(empty($midia_url)) {
                 echo json_encode(['status' => 'error', 'message' => 'Cole o ID do vídeo do YouTube.']);

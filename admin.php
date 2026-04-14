@@ -46,7 +46,7 @@ $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
         .sidebar { width: 250px; background: var(--sidebar); color: white; padding: 20px 0; display: flex; flex-direction: column; }
         .sidebar h2 { text-align: center; font-size: 1.2rem; margin-bottom: 30px; color: var(--primary); }
         .sidebar a { color: #CBD5E1; text-decoration: none; padding: 15px 25px; display: block; border-left: 4px solid transparent; transition: 0.2s; }
-        .sidebar a:hover { background: #1E293B; border-left-color: var(--primary); color: white; }
+        .sidebar a:hover, .sidebar a.active { background: #1E293B; border-left-color: var(--primary); color: white; }
         .sidebar a i { margin-right: 10px; width: 20px; text-align: center; }
         .sidebar .logout { margin-top: auto; border-top: 1px solid #1E293B; }
         .sidebar .logout:hover { border-left-color: #EF4444; }
@@ -77,11 +77,11 @@ $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
 
     <div class="sidebar">
         <h2><i class="fas fa-heartbeat"></i> Admin Gi</h2>
-        <a href="#doacao-manual"><i class="fas fa-hand-holding-heart"></i> Lançar Doação</a>
-        <a href="#configuracoes"><i class="fas fa-wallet"></i> Configurações</a>
-        <a href="#transparencia"><i class="fas fa-file-medical"></i> Transparência</a>
-        <a href="#mural"><i class="fas fa-bullhorn"></i> Mural</a>
-        <a href="#midia"><i class="fas fa-images"></i> Galeria</a>
+        <a href="#doacao-manual" class="nav-link active"><i class="fas fa-hand-holding-heart"></i> Lançar Doação</a>
+        <a href="#configuracoes" class="nav-link"><i class="fas fa-wallet"></i> Configurações</a>
+        <a href="#transparencia" class="nav-link"><i class="fas fa-file-medical"></i> Transparência</a>
+        <a href="#mural" class="nav-link"><i class="fas fa-bullhorn"></i> Mural</a>
+        <a href="#midia" class="nav-link"><i class="fas fa-images"></i> Galeria</a>
         <a href="index.php" target="_blank"><i class="fas fa-external-link-alt"></i> Ver Site</a>
         <a href="?sair=1" class="logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
     </div>
@@ -89,7 +89,7 @@ $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
     <div class="main-content">
         <h1>Painel de Controle</h1>
 
-        <div class="card" id="doacao-manual">
+        <div class="card admin-section" id="doacao-manual">
             <h3><i class="fas fa-hand-holding-heart"></i> Lançar Doação Manual</h3>
             <p style="margin-bottom: 20px; font-size: 0.9rem; color: #64748B;">Use esta opção para registrar doações recebidas por fora do site (ex: PIX direto, dinheiro físico). Isso somará o valor na barra de progresso e criará um recado automático no mural de atualizações.</p>
             
@@ -112,7 +112,7 @@ $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
             </form>
         </div>
 
-        <div class="card" id="configuracoes">
+        <div class="card admin-section" id="configuracoes" style="display: none;">
             <h3><i class="fas fa-wallet"></i> Valores e Chaves PIX</h3>
             <form id="formConfiguracoes">
                 <input type="hidden" name="acao" value="salvar_configuracoes">
@@ -147,7 +147,7 @@ $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
             </form>
         </div>
 
-        <div class="card" id="transparencia">
+        <div class="card admin-section" id="transparencia" style="display: none;">
             <h3><i class="fas fa-file-medical"></i> Adicionar Exame, Laudo ou Orçamento</h3>
             <form id="formExame" enctype="multipart/form-data">
                 <input type="hidden" name="acao" value="adicionar_documento">
@@ -200,7 +200,7 @@ $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
             </table>
         </div>
 
-        <div class="card" id="mural">
+        <div class="card admin-section" id="mural" style="display: none;">
             <h3><i class="fas fa-newspaper"></i> Adicionar Nova Atualização no Mural</h3>
             <form id="formAtualizacao">
                 <input type="hidden" name="acao" value="adicionar_atualizacao">
@@ -247,7 +247,7 @@ $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
             </table>
         </div>
 
-        <div class="card" id="midia">
+        <div class="card admin-section" id="midia" style="display: none;">
             <h3><i class="fas fa-images"></i> Galeria de Mídia (Fotos e Vídeos)</h3>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Adicione várias fotos ou vídeos. Eles aparecerão em formato de galeria no topo do site.</p>
             
@@ -259,6 +259,7 @@ $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
                     <div style="display: flex; gap: 20px; margin-top: 10px;">
                         <label><input type="radio" name="midia_tipo" value="imagem" checked> Nova Imagem (Foto)</label>
                         <label><input type="radio" name="midia_tipo" value="video"> Novo Vídeo (YouTube)</label>
+                        <label><input type="radio" name="midia_tipo" value="video_medico"> Novo Vídeo do Médico (YouTube)</label>
                     </div>
                 </div>
 
@@ -293,9 +294,9 @@ $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
                     while($item = $stmtGaleria->fetch(PDO::FETCH_ASSOC)):
                     ?>
                     <tr id="gal-<?php echo $item['id']; ?>">
-                        <td><i class="fas <?php echo $item['tipo'] == 'video' ? 'fa-play-circle text-danger' : 'fa-image text-primary'; ?>"></i> <?php echo ucfirst($item['tipo']); ?></td>
+                        <td><i class="fas <?php echo ($item['tipo'] == 'video' || $item['tipo'] == 'video_medico') ? 'fa-play-circle text-danger' : 'fa-image text-primary'; ?>"></i> <?php echo ucfirst(str_replace('_', ' do ', $item['tipo'])); ?></td>
                         <td>
-                            <?php if($item['tipo'] == 'video'): ?>
+                            <?php if($item['tipo'] == 'video' || $item['tipo'] == 'video_medico'): ?>
                                 <a href="https://youtube.com/watch?v=<?php echo htmlspecialchars($item['midia_url']); ?>" target="_blank" style="color:var(--primary);">Ver Vídeo</a>
                             <?php else: ?>
                                 <img src="<?php echo htmlspecialchars($item['midia_url']); ?>" style="max-height: 40px; border-radius: 4px;">

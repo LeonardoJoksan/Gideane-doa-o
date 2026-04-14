@@ -2,6 +2,22 @@
 
 $(document).ready(function () {
 
+     // 0. Navegação em Abas (Tabs) do Painel
+     $('.nav-link').on('click', function(e) {
+          e.preventDefault();
+
+          // Remove active de todos os links e adiciona no clicado
+          $('.nav-link').removeClass('active');
+          $(this).addClass('active');
+
+          // Esconde todas as seções
+          $('.admin-section').hide();
+
+          // Pega o ID da seção a partir do href do link clicado e mostra ela
+          let targetSection = $(this).attr('href');
+          $(targetSection).fadeIn();
+     });
+
      // 1. Salvar Configurações Gerais (Metas e PIX)
      $('#formConfiguracoes').on('submit', function (e) {
           e.preventDefault(); // Bloqueia o recarregamento da página
@@ -96,7 +112,7 @@ $(document).ready(function () {
 
      // 4. Alternar campos de imagem/vídeo na Galeria
      $('input[name="midia_tipo"]').on('change', function () {
-          if ($(this).val() === 'video') {
+          if ($(this).val() === 'video' || $(this).val() === 'video_medico') {
                $('.campo-video').fadeIn();
                $('.campo-imagem').fadeOut();
           } else {
