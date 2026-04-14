@@ -28,16 +28,39 @@ $atualizacoes = $stmtAtualizacoes->fetchAll(PDO::FETCH_ASSOC);
 $stmtDocs = $pdo->query("SELECT * FROM documentos ORDER BY id DESC");
 $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
 
-// Pega a contagem de usuários online
+// Pega a contagem e os dados dos usuários online
 $qtd_online = 0;
+$lista_usuarios_online = [];
 try {
-    $stmtOnline = $pdo->query("SELECT COUNT(*) as total FROM usuarios_online");
-    $resultadoOnline = $stmtOnline->fetch(PDO::FETCH_ASSOC);
-    if ($resultadoOnline) {
-        $qtd_online = $resultadoOnline['total'];
-    }
+    $stmtOnline = $pdo->query("SELECT * FROM usuarios_online ORDER BY ultimo_acesso DESC");
+    $lista_usuarios_online = $stmtOnline->fetchAll(PDO::FETCH_ASSOC);
+    $qtd_online = count($lista_usuarios_online);
 } catch (Exception $e) {
     // Ignora se a tabela não existir
+}
+
+// Função simples para extrair o nome do navegador do User Agent
+function getBrowserName($user_agent) {
+    $t = strtolower($user_agent);
+    $t = " " . $t;
+    if (strpos($t, 'opera') || strpos($t, 'opr/')) return 'Opera';
+    elseif (strpos($t, 'edge')) return 'Edge';
+    elseif (strpos($t, 'chrome')) return 'Chrome';
+    elseif (strpos($t, 'safari')) return 'Safari';
+    elseif (strpos($t, 'firefox')) return 'Firefox';
+    elseif (strpos($t, 'msie') || strpos($t, 'trident/7')) return 'Internet Explorer';
+    return 'Desconhecido';
+}
+
+// Função simples para extrair o OS do User Agent
+function getOSName($user_agent) {
+    $t = strtolower($user_agent);
+    if (strpos($t, 'windows')) return 'Windows';
+    elseif (strpos($t, 'mac')) return 'Mac OS';
+    elseif (strpos($t, 'linux')) return 'Linux';
+    elseif (strpos($t, 'android')) return 'Android';
+    elseif (strpos($t, 'iphone') || strpos($t, 'ipad')) return 'iOS';
+    return 'Desconhecido';
 }
 ?>
 <!DOCTYPE html>
@@ -90,13 +113,14 @@ try {
     <div class="sidebar">
         <h2><i class="fas fa-heartbeat"></i> Admin Gi</h2>
 
-        <div style="background: rgba(255,255,255,0.1); margin: 0 15px 20px 15px; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.2);">
+        <a href="#usuarios-online-admin" class="nav-link" style="background: rgba(255,255,255,0.1); margin: 0 15px 20px 15px; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.2); display: block; border-left: none;">
             <div style="font-size: 0.85rem; color: #94A3B8; text-transform: uppercase; margin-bottom: 5px;">Pessoas no site agora</div>
             <div style="font-size: 2rem; font-weight: 700; color: #10B981; display: flex; align-items: center; justify-content: center; gap: 10px;">
                 <i class="fas fa-circle" style="font-size: 0.8rem; animation: pulse-danger 1.5s infinite;"></i>
                 <?php echo $qtd_online; ?>
             </div>
-        </div>
+            <div style="font-size: 0.75rem; color: #CBD5E1; margin-top: 5px;">Clique para ver detalhes</div>
+        </a>
 
         <a href="#doacao-manual" class="nav-link active"><i class="fas fa-hand-holding-heart"></i> Lançar Doação</a>
         <a href="#configuracoes" class="nav-link"><i class="fas fa-wallet"></i> Configurações</a>
@@ -381,6 +405,36 @@ try {
                         echo "<tr><td colspan='3'>Erro ao carregar vídeos: " . $e->getMessage() . "</td></tr>";
                     }
                     ?>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card admin-section" id="usuarios-online-admin" style="display: none;">
+            <h3><i class="fas fa-users"></i> Pessoas no Site Agora</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Esta lista mostra quem está navegando no site nos últimos 5 minutos. Bots conhecidos (como rastreadores do Google ou WhatsApp) são filtrados automaticamente.</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>IP</th>
+                        <th>Sistema / Dispositivo</th>
+                        <th>Navegador</th>
+                        <th>Último Acesso</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if(count($lista_usuarios_online) > 0): ?>
+                        <?php foreach($lista_usuarios_online as $user): ?>
+                        <tr>
+                            <td style="font-family: monospace; color: var(--primary);"><?php echo htmlspecialchars($user['ip_address'] ?: 'Desconhecido'); ?></td>
+                            <td><?php echo getOSName($user['user_agent']); ?></td>
+                            <td><?php echo getBrowserName($user['user_agent']); ?></td>
+                            <td><?php echo date('d/m/Y H:i:s', strtotime($user['ultimo_acesso'])); ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr><td colspan='4' style="text-align: center; color: var(--text-muted);">Nenhuma pessoa online no momento.</td></tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
