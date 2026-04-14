@@ -136,33 +136,7 @@ try {
         </div>
     </header>
 
-    <?php if (count($videos_medico) > 0): ?>
-    <section class="section bg-light" id="videos-medico">
-        <div class="container max-w-800">
-            <h2 class="section-title text-center">Tire suas Dúvidas com o Especialista</h2>
-            <p class="section-subtitle text-center">Vídeos explicativos sobre a gravidade e urgência da Braquiterapia Ocular.</p>
-
-            <div class="faq-container">
-                <?php foreach($videos_medico as $video): ?>
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <i class="fas fa-play-circle" style="color: var(--secondary); margin-right: 10px;"></i>
-                        <?php echo htmlspecialchars($video['titulo']); ?>
-                        <i class="fas fa-chevron-down" style="margin-left: auto;"></i>
-                    </div>
-                    <div class="faq-answer">
-                        <div style="padding-top: 15px; padding-bottom: 15px;">
-                            <iframe src="https://www.youtube.com/embed/<?php echo htmlspecialchars($video['video_id']); ?>?modestbranding=1&rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen title="Vídeo Explicativo do Médico" style="width: 100%; aspect-ratio: 16/9; display: block; border-radius: 8px; box-shadow: var(--shadow-md);"></iframe>
-                        </div>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </section>
-    <?php endif; ?>
-
-    <section class="section <?php echo count($videos_medico) > 0 ? 'bg-white' : 'bg-light'; ?>" id="historia">
+    <section class="section bg-light" id="historia">
         <div class="container max-w-800">
             <h2 class="section-title text-center">A Nossa Corrida Pela Vida</h2>
             
@@ -332,6 +306,29 @@ try {
         </div>
     </section>
 
+    <?php if (count($videos_medico) > 0): ?>
+    <section class="section bg-light" id="videos-medico">
+        <div class="container max-w-800">
+            <h2 class="section-title text-center">Tire suas Dúvidas com o Especialista</h2>
+            <p class="section-subtitle text-center">Vídeos explicativos sobre a gravidade e urgência da Braquiterapia Ocular.</p>
+
+            <div class="medico-videos-grid">
+                <?php foreach($videos_medico as $video): ?>
+                <div class="medico-thumb-wrapper" onclick="openVideoModal('<?php echo htmlspecialchars($video['video_id']); ?>')">
+                    <img src="https://img.youtube.com/vi/<?php echo htmlspecialchars($video['video_id']); ?>/hqdefault.jpg" alt="<?php echo htmlspecialchars($video['titulo']); ?>">
+                    <div class="play-icon-overlay">
+                        <i class="fas fa-play-circle"></i>
+                    </div>
+                    <div class="medico-thumb-title">
+                        <?php echo htmlspecialchars($video['titulo']); ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+    <?php endif; ?>
+
     <section class="section" id="transparencia">
         <div class="container">
             <h2 class="section-title text-center">Transparência</h2>
@@ -479,6 +476,16 @@ try {
         <button onclick="compartilharZap()" class="btn btn-whatsapp-full">
             <i class="fab fa-whatsapp"></i> Ajude Compartilhando
         </button>
+    </div>
+
+    <!-- Modal de Vídeo -->
+    <div class="video-modal" id="videoModal">
+        <div class="video-modal-content">
+            <div class="video-modal-close" onclick="closeVideoModal()"><i class="fas fa-times"></i></div>
+            <div class="video-modal-iframe-container" id="videoModalContainer">
+                <!-- O iframe será injetado aqui pelo JS -->
+            </div>
+        </div>
     </div>
 
     <script src="gi.js"></script>

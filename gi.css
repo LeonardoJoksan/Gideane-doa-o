@@ -224,7 +224,7 @@ body {
 .hero-media {
      flex: 1;
      width: 100%;
-     max-width: 100%;
+     max-width: 550px;
 }
 
 .media-gallery {
@@ -345,6 +345,127 @@ body {
      font-size: 1.1rem;
      color: var(--text-muted);
      margin-bottom: 48px;
+}
+
+/* --- VÍDEOS DO MÉDICO (MODAL & THUMBS) --- */
+.medico-videos-grid {
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+     gap: 20px;
+     margin-top: 30px;
+}
+
+.medico-thumb-wrapper {
+     position: relative;
+     border-radius: 12px;
+     overflow: hidden;
+     cursor: pointer;
+     box-shadow: var(--shadow-sm);
+     transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.medico-thumb-wrapper:hover {
+     transform: translateY(-5px);
+     box-shadow: var(--shadow-lg);
+}
+
+.medico-thumb-wrapper img {
+     width: 100%;
+     display: block;
+     aspect-ratio: 16/9;
+     object-fit: cover;
+}
+
+.medico-thumb-wrapper .play-icon-overlay {
+     position: absolute;
+     top: 0; left: 0; right: 0; bottom: 0;
+     background: rgba(0,0,0,0.3);
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     transition: background 0.3s;
+}
+
+.medico-thumb-wrapper:hover .play-icon-overlay {
+     background: rgba(0,0,0,0.5);
+}
+
+.medico-thumb-wrapper .play-icon-overlay i {
+     font-size: 3rem;
+     color: white;
+     opacity: 0.9;
+     text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+     transition: transform 0.3s;
+}
+
+.medico-thumb-wrapper:hover .play-icon-overlay i {
+     transform: scale(1.1);
+}
+
+.medico-thumb-title {
+     position: absolute;
+     bottom: 0; left: 0; right: 0;
+     background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+     color: white;
+     padding: 20px 15px 10px;
+     font-size: 0.95rem;
+     font-weight: 600;
+}
+
+/* Modal do Vídeo */
+.video-modal {
+     display: none;
+     position: fixed;
+     top: 0; left: 0; right: 0; bottom: 0;
+     background: rgba(15, 23, 42, 0.95);
+     z-index: 9999;
+     align-items: center;
+     justify-content: center;
+     padding: 20px;
+}
+
+.video-modal.active {
+     display: flex;
+}
+
+.video-modal-content {
+     position: relative;
+     width: 100%;
+     max-width: 900px;
+     background: #000;
+     border-radius: 12px;
+     overflow: hidden;
+     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.video-modal-close {
+     position: absolute;
+     top: -40px;
+     right: 0;
+     color: white;
+     font-size: 2rem;
+     cursor: pointer;
+     transition: color 0.3s;
+}
+
+.video-modal-close:hover {
+     color: var(--accent);
+}
+
+.video-modal-iframe-container {
+     position: relative;
+     padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+     height: 0;
+     overflow: hidden;
+}
+
+.video-modal-iframe-container iframe {
+     position: absolute;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     border: none;
 }
 
 /* --- HISTÓRIA --- */

@@ -208,3 +208,46 @@ document.addEventListener("DOMContentLoaded", () => {
           });
      }
 });
+
+// ==========================================
+// 8. FUNÇÕES DO MODAL DE VÍDEO
+// ==========================================
+function openVideoModal(videoId) {
+     const modal = document.getElementById('videoModal');
+     const container = document.getElementById('videoModalContainer');
+
+     if (modal && container) {
+          // Injeta o iframe com autoplay
+          container.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&modestbranding=1&rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+          // Mostra o modal
+          modal.classList.add('active');
+          // Impede rolagem do fundo
+          document.body.style.overflow = 'hidden';
+     }
+}
+
+function closeVideoModal() {
+     const modal = document.getElementById('videoModal');
+     const container = document.getElementById('videoModalContainer');
+
+     if (modal && container) {
+          // Esconde o modal
+          modal.classList.remove('active');
+          // Remove o iframe para parar o vídeo
+          container.innerHTML = '';
+          // Restaura a rolagem
+          document.body.style.overflow = '';
+     }
+}
+
+// Fechar modal ao clicar fora do conteúdo
+document.addEventListener('DOMContentLoaded', () => {
+     const modal = document.getElementById('videoModal');
+     if (modal) {
+          modal.addEventListener('click', (e) => {
+               if (e.target === modal) {
+                    closeVideoModal();
+               }
+          });
+     }
+});
