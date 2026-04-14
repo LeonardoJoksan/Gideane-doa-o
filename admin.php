@@ -148,6 +148,24 @@ try {
     $stats_extras['perc_mobile'] = $total_devices > 0 ? round(($devices['Mobile'] / $total_devices) * 100, 1) : 0;
     $stats_extras['perc_desktop'] = $total_devices > 0 ? round(($devices['Desktop'] / $total_devices) * 100, 1) : 0;
 
+    // Prepara dados para os Gráficos JS
+    $dias_ordem = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    $chart_dias_labels = [];
+    $chart_dias_data = [];
+    foreach($dias_ordem as $dia) {
+        $chart_dias_labels[] = $dia;
+        $chart_dias_data[] = $stats_extras['acessos_por_dia'][$dia] ?? 0;
+    }
+
+    $chart_estados_labels = [];
+    $chart_estados_data = [];
+    foreach($stats_extras['top_estados'] as $e) {
+        $chart_estados_labels[] = $e['estado'];
+        $chart_estados_data[] = $e['qtd'];
+    }
+
+    $chart_browsers_labels = array_keys($stats_extras['top_browsers']);
+    $chart_browsers_data = array_values($stats_extras['top_browsers']);
 
     // Pega os últimos 100 acessos para a tabela
     $stmtHistorico = $pdo->query("SELECT * FROM historico_acessos ORDER BY data_acesso DESC LIMIT 100");
@@ -190,6 +208,7 @@ function getOSName($user_agent) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         :root { --bg: #F8FAFC; --sidebar: #0F172A; --primary: #0EA5E9; --text: #334155; --card: #FFFFFF; }
@@ -599,63 +618,24 @@ function getOSName($user_agent) {
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; margin-bottom: 30px;">
 
                 <div>
-                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">2. Análise de Comportamento Temporal</h4>
-                    <ul style="list-style: none; padding: 0;">
-                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
-                            <span style="color: var(--text-muted);">Pico Histórico de Acessos:</span>
-                            <strong><?php echo isset($stats_extras['dia_com_mais_acessos_historico']['data_pico']) ? date('d/m/Y', strtotime($stats_extras['dia_com_mais_acessos_historico']['data_pico'])) . ' (' . $stats_extras['dia_com_mais_acessos_historico']['qtd'] . ' acessos)' : 'N/A'; ?></strong>
-                        </li>
-                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
-                            <span style="color: var(--text-muted);">Horário de Pico Geral:</span>
-                            <strong><?php echo isset($stats_extras['hora_pico']['hora']) ? $stats_extras['hora_pico']['hora'] . 'h00 (' . $stats_extras['hora_pico']['qtd'] . ' acessos)' : 'N/A'; ?></strong>
-                        </li>
-                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
-                            <span style="color: var(--text-muted);">Acessos Fim de Semana / Úteis:</span>
-                            <strong><?php echo $stats_extras['fim_de_semana'] . ' / ' . $stats_extras['dias_uteis']; ?></strong>
-                        </li>
-                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
-                            <span style="color: var(--text-muted);">Tráfego por Turno:</span>
-                            <span style="font-size: 0.85rem;">
-                                Madruga: <strong><?php echo $stats_extras['acessos_madrugada']; ?></strong> |
-                                Manhã: <strong><?php echo $stats_extras['acessos_manha']; ?></strong> |
-                                Tarde: <strong><?php echo $stats_extras['acessos_tarde']; ?></strong> |
-                                Noite: <strong><?php echo $stats_extras['acessos_noite']; ?></strong>
-                            </span>
-                        </li>
-                    </ul>
+                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">2. Acessos por Dia da Semana</h4>
+                    <div style="background: var(--bg-light); padding: 15px; border-radius: 8px; height: 300px; display: flex; align-items: center; justify-content: center;">
+                        <canvas id="chartDias"></canvas>
+                    </div>
                 </div>
 
                 <div>
-                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">3. Audiência Geográfica</h4>
-                    <ul style="list-style: none; padding: 0;">
-                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
-                            <span style="color: var(--text-muted);">Total de Estados e Cidades Distintas:</span>
-                            <strong><?php echo $stats_extras['qtd_estados_distintos']; ?> estados, <?php echo $stats_extras['qtd_cidades_distintas']; ?> cidades</strong>
-                        </li>
-                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
-                            <span style="color: var(--text-muted);">Tráfego Internacional:</span>
-                            <strong><?php echo $stats_extras['acessos_internacionais']; ?> acessos</strong>
-                        </li>
-                        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color);">
-                            <span style="color: var(--text-muted); display: block; margin-bottom: 5px;">Top 3 Estados:</span>
-                            <?php
-                                $top_e = array_slice($stats_extras['top_estados'], 0, 3);
-                                foreach($top_e as $e) echo "<span style='background: #E2E8F0; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; margin-right: 5px;'>{$e['estado']} ({$e['qtd']})</span>";
-                                if(empty($top_e)) echo "<span style='color: #94A3B8; font-size: 0.85rem;'>Nenhum dado</span>";
-                            ?>
-                        </li>
-                        <li style="padding: 8px 0;">
-                            <span style="color: var(--text-muted); display: block; margin-bottom: 5px;">Top 3 Cidades:</span>
-                            <?php
-                                $top_c = array_slice($stats_extras['top_cidades'], 0, 3);
-                                foreach($top_c as $c) echo "<span style='background: #E2E8F0; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; margin-right: 5px;'>{$c['cidade']} ({$c['qtd']})</span>";
-                                if(empty($top_c)) echo "<span style='color: #94A3B8; font-size: 0.85rem;'>Nenhum dado</span>";
-                            ?>
-                        </li>
-                    </ul>
+                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">3. Top Estados</h4>
+                    <div style="background: var(--bg-light); padding: 15px; border-radius: 8px; height: 300px; display: flex; align-items: center; justify-content: center;">
+                        <?php if(count($chart_estados_labels) > 0): ?>
+                            <canvas id="chartEstados"></canvas>
+                        <?php else: ?>
+                            <p style="color: var(--text-muted);">Nenhum dado geográfico disponível ainda.</p>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
 
@@ -680,18 +660,11 @@ function getOSName($user_agent) {
                     </div>
                 </div>
 
-                <div>
-                    <h5 style="margin-bottom: 10px; color: var(--text-dark);">Top Navegadores e SOs</h5>
-                    <ul style="font-size: 0.85rem; color: var(--text-muted); list-style: square; padding-left: 15px;">
-                        <?php
-                        foreach($stats_extras['top_browsers'] as $br => $qtd) echo "<li><strong>$br:</strong> $qtd acessos</li>";
-                        ?>
-                    </ul>
-                    <ul style="font-size: 0.85rem; color: var(--text-muted); list-style: square; padding-left: 15px; margin-top: 10px;">
-                        <?php
-                        foreach($stats_extras['top_oss'] as $os => $qtd) echo "<li><strong>$os:</strong> $qtd acessos</li>";
-                        ?>
-                    </ul>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <h5 style="margin-bottom: 10px; color: var(--text-dark);">Top Navegadores</h5>
+                    <div style="width: 100%; max-width: 180px; height: 180px; margin-bottom: 15px;">
+                        <canvas id="chartBrowsers"></canvas>
+                    </div>
                 </div>
 
                 <div>
@@ -747,5 +720,97 @@ function getOSName($user_agent) {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="admin.js"></script>
 
+    <script>
+        // Dados PHP para o JS
+        const chartDiasLabels = <?php echo json_encode($chart_dias_labels); ?>;
+        const chartDiasData = <?php echo json_encode($chart_dias_data); ?>;
+
+        const chartEstadosLabels = <?php echo json_encode($chart_estados_labels); ?>;
+        const chartEstadosData = <?php echo json_encode($chart_estados_data); ?>;
+
+        const chartBrowsersLabels = <?php echo json_encode($chart_browsers_labels); ?>;
+        const chartBrowsersData = <?php echo json_encode($chart_browsers_data); ?>;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Gráfico de Dias da Semana (Bar)
+            const ctxDias = document.getElementById('chartDias');
+            if (ctxDias) {
+                new Chart(ctxDias, {
+                    type: 'bar',
+                    data: {
+                        labels: chartDiasLabels,
+                        datasets: [{
+                            label: 'Total de Acessos Históricos',
+                            data: chartDiasData,
+                            backgroundColor: 'rgba(14, 165, 233, 0.7)',
+                            borderColor: 'rgba(14, 165, 233, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+
+            // 2. Gráfico de Top Estados (Barra Horizontal)
+            const ctxEstados = document.getElementById('chartEstados');
+            if (ctxEstados && chartEstadosLabels.length > 0) {
+                new Chart(ctxEstados, {
+                    type: 'bar',
+                    data: {
+                        labels: chartEstadosLabels,
+                        datasets: [{
+                            label: 'Acessos por Estado',
+                            data: chartEstadosData,
+                            backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { beginAtZero: true } }
+                    }
+                });
+            }
+
+            // 3. Gráfico de Navegadores (Doughnut)
+            const ctxBrowsers = document.getElementById('chartBrowsers');
+            if (ctxBrowsers && chartBrowsersLabels.length > 0) {
+                new Chart(ctxBrowsers, {
+                    type: 'doughnut',
+                    data: {
+                        labels: chartBrowsersLabels,
+                        datasets: [{
+                            data: chartBrowsersData,
+                            backgroundColor: [
+                                '#0EA5E9', '#F59E0B', '#10B981', '#8B5CF6', '#F43F5E'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { boxWidth: 12, font: { size: 10 } }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

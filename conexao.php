@@ -24,7 +24,9 @@ try {
         sessao_id VARCHAR(100) PRIMARY KEY,
         ultimo_acesso TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         ip_address VARCHAR(45),
-        user_agent VARCHAR(255)
+        user_agent VARCHAR(255),
+        cidade VARCHAR(100),
+        estado VARCHAR(50)
     )";
     $pdo->exec($sql_online);
 
