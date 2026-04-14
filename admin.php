@@ -211,6 +211,47 @@ try {
     // Tabela pode não existir ainda
 }
 
+// ==========================================
+// ESTATÍSTICAS DE DOAÇÕES (MURAL)
+// ==========================================
+$doadores = [];
+$total_doacoes_qtd = 0;
+$maior_doacao = ['nome' => 'Ninguém', 'valor' => 0];
+$soma_total = 0;
+
+foreach ($atualizacoes as $up) {
+    if (preg_match('/([A-Za-zÀ-ú\s]+)\sacabou de doar R\$ ([0-9]+(?:\.[0-9]{3})*,[0-9]{2})/', $up['descricao'], $matches)) {
+        $nome_doador = trim($matches[1]);
+        $valorStr = $matches[2];
+        $valorLimpo = str_replace('.', '', $valorStr);
+        $valorLimpo = str_replace(',', '.', $valorLimpo);
+        $valor = (float)$valorLimpo;
+
+        $total_doacoes_qtd++;
+        $soma_total += $valor;
+
+        if ($valor > $maior_doacao['valor']) {
+            $maior_doacao['valor'] = $valor;
+            $maior_doacao['nome'] = $nome_doador;
+        }
+
+        // Agrupa por nome para pegar "Quem doou mais no total"
+        if (!isset($doadores[$nome_doador])) {
+            $doadores[$nome_doador] = ['qtd' => 0, 'total' => 0];
+        }
+        $doadores[$nome_doador]['qtd']++;
+        $doadores[$nome_doador]['total'] += $valor;
+    }
+}
+
+// Ordena o array de doadores pelo valor total doado
+uasort($doadores, function($a, $b) {
+    return $b['total'] <=> $a['total'];
+});
+$top_5_doadores = array_slice($doadores, 0, 5, true);
+$media_doacao = $total_doacoes_qtd > 0 ? ($soma_total / $total_doacoes_qtd) : 0;
+
+
 // Função simples para extrair o nome do navegador do User Agent
 function getBrowserName($user_agent) {
     $t = strtolower($user_agent);
@@ -245,6 +286,7 @@ function getOSName($user_agent) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
         :root { --bg: #F8FAFC; --sidebar: #0F172A; --primary: #0EA5E9; --text: #334155; --card: #FFFFFF; }
@@ -301,7 +343,8 @@ function getOSName($user_agent) {
         <a href="#mural" class="nav-link"><i class="fas fa-bullhorn"></i> Mural</a>
         <a href="#midia" class="nav-link"><i class="fas fa-images"></i> Galeria</a>
         <a href="#videos-medico-admin" class="nav-link"><i class="fas fa-user-md"></i> Vídeos Médico</a>
-        <a href="#historico-acessos-admin" class="nav-link"><i class="fas fa-chart-line"></i> Acessos</a>
+        <a href="#historico-doacoes-admin" class="nav-link"><i class="fas fa-hand-holding-usd"></i> Estatísticas de Doações</a>
+        <a href="#historico-acessos-admin" class="nav-link"><i class="fas fa-chart-line"></i> Acessos ao Site</a>
         <a href="index.php" target="_blank"><i class="fas fa-external-link-alt"></i> Ver Site</a>
         <a href="?sair=1" class="logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
     </div>
@@ -623,8 +666,85 @@ function getOSName($user_agent) {
             </table>
         </div>
 
+        <div class="card admin-section" id="historico-doacoes-admin" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 0; border: none; padding: 0;"><i class="fas fa-hand-holding-usd"></i> Estatísticas de Doações</h3>
+                <button class="btn btn-outline" style="border-color: var(--primary); color: var(--primary); padding: 8px 16px; font-size: 0.9rem;" onclick="exportarPDF('historico-doacoes-admin', 'Estatisticas_Doacoes_Gi.pdf')"><i class="fas fa-file-pdf"></i> Salvar PDF</button>
+            </div>
+
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Insights detalhados extraídos do Mural de Atualizações da campanha.</p>
+
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px;">
+                <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.80rem; color: var(--text-muted); text-transform: uppercase;">Nº de Doações</div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);"><?php echo $total_doacoes_qtd; ?></div>
+                </div>
+                <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.80rem; color: var(--text-muted); text-transform: uppercase;">Valor Médio</div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);">R$ <?php echo number_format($media_doacao, 2, ',', '.'); ?></div>
+                </div>
+                <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.80rem; color: var(--text-muted); text-transform: uppercase;">Maior Doação Única</div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);">R$ <?php echo number_format($maior_doacao['valor'], 2, ',', '.'); ?></div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Por: <?php echo htmlspecialchars($maior_doacao['nome']); ?></div>
+                </div>
+                <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.80rem; color: var(--text-muted); text-transform: uppercase;">Doadores Distintos</div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);"><?php echo count($doadores); ?></div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+                <div>
+                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Top 5 Doadores (Volume Total)</h4>
+                    <table style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Doador</th>
+                                <th style="text-align: center;">Nº de Doações</th>
+                                <th style="text-align: right;">Total Doado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if(count($top_5_doadores) > 0): ?>
+                                <?php foreach($top_5_doadores as $nome => $dados): ?>
+                                <tr>
+                                    <td><strong><?php echo htmlspecialchars($nome); ?></strong></td>
+                                    <td style="text-align: center;"><?php echo $dados['qtd']; ?></td>
+                                    <td style="text-align: right; color: var(--success); font-weight: 600;">R$ <?php echo number_format($dados['total'], 2, ',', '.'); ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr><td colspan="3" style="text-align: center;">Nenhuma doação registrada.</td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div>
+                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Informações Adicionais</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding: 12px 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Soma Total do Mural:</span>
+                            <strong style="color: var(--success);">R$ <?php echo number_format($soma_total, 2, ',', '.'); ?></strong>
+                        </li>
+                        <li style="padding: 12px 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Total Oficial da Campanha:</span>
+                            <strong style="color: var(--success);">R$ <?php echo number_format($config['valor_arrecadado'], 2, ',', '.'); ?></strong>
+                        </li>
+                        <li style="padding: 12px 0;">
+                            <p style="font-size: 0.85rem; color: #94A3B8; margin-top: 10px;"><em>Nota: A "Soma Total do Mural" baseia-se nas postagens automáticas e manuais do painel. Ela pode divergir do "Total Oficial" se valores forem editados manualmente na aba de configurações.</em></p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
         <div class="card admin-section" id="historico-acessos-admin" style="display: none;">
-            <h3><i class="fas fa-chart-line"></i> Dashboard de Acessos</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 0; border: none; padding: 0;"><i class="fas fa-chart-line"></i> Dashboard de Acessos</h3>
+                <button class="btn btn-outline" style="border-color: var(--primary); color: var(--primary); padding: 8px 16px; font-size: 0.9rem;" onclick="exportarPDF('historico-acessos-admin', 'Relatorio_Acessos_Gi.pdf')"><i class="fas fa-file-pdf"></i> Salvar PDF</button>
+            </div>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Análise completa de tráfego, audiência e retenção do site.</p>
 
             <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">1. Visão Geral (Volume)</h4>

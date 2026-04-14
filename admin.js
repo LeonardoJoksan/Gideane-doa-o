@@ -143,6 +143,49 @@ $(document).ready(function () {
           });
      });
 
+// ==========================================
+// FUNÇÕES DE EXPORTAÇÃO (PDF)
+// ==========================================
+function exportarPDF(elementId, filename) {
+     const element = document.getElementById(elementId);
+
+     // Remove momentaneamente o botão de exportar para não sair no PDF
+     const botoesExportar = element.querySelectorAll('button');
+     botoesExportar.forEach(b => b.style.display = 'none');
+
+     // Opções do html2pdf
+     var opt = {
+          margin:       0.5,
+          filename:     filename,
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, useCORS: true },
+          jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+     };
+
+     // Adiciona um loading via SweetAlert para feedback
+     Swal.fire({
+          title: 'Gerando PDF...',
+          text: 'Por favor, aguarde enquanto o relatório é criado.',
+          allowOutsideClick: false,
+          didOpen: () => {
+               Swal.showLoading();
+          }
+     });
+
+     // Gera e salva
+     html2pdf().set(opt).from(element).save().then(() => {
+          // Devolve os botões
+          botoesExportar.forEach(b => b.style.display = '');
+          Swal.close();
+          Swal.fire('Sucesso!', 'Seu relatório foi baixado.', 'success');
+     }).catch((err) => {
+          botoesExportar.forEach(b => b.style.display = '');
+          Swal.close();
+          Swal.fire('Erro!', 'Ocorreu um problema ao gerar o PDF.', 'error');
+          console.error(err);
+     });
+}
+
      // Adicionar Vídeo do Médico
      $('#formVideoMedico').on('submit', function (e) {
           e.preventDefault();
