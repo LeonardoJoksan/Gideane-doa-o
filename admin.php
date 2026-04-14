@@ -27,6 +27,18 @@ $atualizacoes = $stmtAtualizacoes->fetchAll(PDO::FETCH_ASSOC);
 // Busca os documentos de transparência
 $stmtDocs = $pdo->query("SELECT * FROM documentos ORDER BY id DESC");
 $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
+
+// Pega a contagem de usuários online
+$qtd_online = 0;
+try {
+    $stmtOnline = $pdo->query("SELECT COUNT(*) as total FROM usuarios_online");
+    $resultadoOnline = $stmtOnline->fetch(PDO::FETCH_ASSOC);
+    if ($resultadoOnline) {
+        $qtd_online = $resultadoOnline['total'];
+    }
+} catch (Exception $e) {
+    // Ignora se a tabela não existir
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -77,6 +89,15 @@ $documentos = $stmtDocs->fetchAll(PDO::FETCH_ASSOC);
 
     <div class="sidebar">
         <h2><i class="fas fa-heartbeat"></i> Admin Gi</h2>
+
+        <div style="background: rgba(255,255,255,0.1); margin: 0 15px 20px 15px; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.2);">
+            <div style="font-size: 0.85rem; color: #94A3B8; text-transform: uppercase; margin-bottom: 5px;">Pessoas no site agora</div>
+            <div style="font-size: 2rem; font-weight: 700; color: #10B981; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <i class="fas fa-circle" style="font-size: 0.8rem; animation: pulse-danger 1.5s infinite;"></i>
+                <?php echo $qtd_online; ?>
+            </div>
+        </div>
+
         <a href="#doacao-manual" class="nav-link active"><i class="fas fa-hand-holding-heart"></i> Lançar Doação</a>
         <a href="#configuracoes" class="nav-link"><i class="fas fa-wallet"></i> Configurações</a>
         <a href="#transparencia" class="nav-link"><i class="fas fa-file-medical"></i> Transparência</a>
