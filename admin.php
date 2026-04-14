@@ -443,6 +443,7 @@ function getOSName($user_agent) {
                 <thead>
                     <tr>
                         <th>IP</th>
+                        <th>Localização</th>
                         <th>Sistema / Dispositivo</th>
                         <th>Navegador</th>
                         <th>Último Acesso</th>
@@ -453,13 +454,22 @@ function getOSName($user_agent) {
                         <?php foreach($lista_usuarios_online as $user): ?>
                         <tr>
                             <td style="font-family: monospace; color: var(--primary);"><?php echo htmlspecialchars($user['ip_address'] ?: 'Desconhecido'); ?></td>
+                            <td>
+                                <?php
+                                    if(!empty($user['cidade']) && !empty($user['estado'])) {
+                                        echo htmlspecialchars($user['cidade'] . ' - ' . $user['estado']);
+                                    } else {
+                                        echo 'Desconhecida';
+                                    }
+                                ?>
+                            </td>
                             <td><?php echo getOSName($user['user_agent']); ?></td>
                             <td><?php echo getBrowserName($user['user_agent']); ?></td>
                             <td><?php echo date('d/m/Y H:i:s', strtotime($user['ultimo_acesso'])); ?></td>
                         </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <tr><td colspan='4' style="text-align: center; color: var(--text-muted);">Nenhuma pessoa online no momento.</td></tr>
+                        <tr><td colspan='5' style="text-align: center; color: var(--text-muted);">Nenhuma pessoa online no momento.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
@@ -494,6 +504,7 @@ function getOSName($user_agent) {
                     <tr>
                         <th>Data do Acesso</th>
                         <th>IP</th>
+                        <th>Localização</th>
                         <th>Sistema / Dispositivo</th>
                         <th>Navegador</th>
                     </tr>
@@ -504,12 +515,21 @@ function getOSName($user_agent) {
                         <tr>
                             <td><?php echo date('d/m/Y H:i:s', strtotime($acesso['data_acesso'])); ?></td>
                             <td style="font-family: monospace; color: var(--primary);"><?php echo htmlspecialchars($acesso['ip_address'] ?: 'Desconhecido'); ?></td>
+                            <td>
+                                <?php
+                                    if(!empty($acesso['cidade']) && !empty($acesso['estado'])) {
+                                        echo htmlspecialchars($acesso['cidade'] . ' - ' . $acesso['estado']);
+                                    } else {
+                                        echo 'Desconhecida';
+                                    }
+                                ?>
+                            </td>
                             <td><?php echo getOSName($acesso['user_agent']); ?></td>
                             <td><?php echo getBrowserName($acesso['user_agent']); ?></td>
                         </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <tr><td colspan='4' style="text-align: center; color: var(--text-muted);">Nenhum acesso registrado ainda.</td></tr>
+                        <tr><td colspan='5' style="text-align: center; color: var(--text-muted);">Nenhum acesso registrado ainda.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
