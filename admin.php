@@ -91,10 +91,30 @@ try {
     $stats_extras['fim_de_semana'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos WHERE DAYOFWEEK(data_acesso) IN (1, 7)")->fetchColumn();
     $stats_extras['dias_uteis'] = $stats_acessos['total'] - $stats_extras['fim_de_semana']; // 13
 
+    // Dados para Gráfico de Tendência 14 Dias
+    $tendencia_14d = $pdo->query("SELECT DATE(data_acesso) as dt, COUNT(*) as qtd FROM historico_acessos WHERE data_acesso >= (CURDATE() - INTERVAL 13 DAY) GROUP BY dt ORDER BY dt ASC")->fetchAll(PDO::FETCH_ASSOC);
+    $stats_extras['tendencia_14d'] = [];
+    // Preenche os dias vazios com 0
+    for ($i = 13; $i >= 0; $i--) {
+        $data_alvo = date('Y-m-d', strtotime("-$i days"));
+        $stats_extras['tendencia_14d'][$data_alvo] = 0;
+    }
+    foreach($tendencia_14d as $td) {
+        $stats_extras['tendencia_14d'][$td['dt']] = $td['qtd'];
+    }
+
+    // Dados para Gráfico de Distribuição por Hora (0-23)
+    $dist_hora = $pdo->query("SELECT HOUR(data_acesso) as hr, COUNT(*) as qtd FROM historico_acessos GROUP BY hr ORDER BY hr ASC")->fetchAll(PDO::FETCH_ASSOC);
+    $stats_extras['distribuicao_hora'] = array_fill(0, 24, 0);
+    foreach($dist_hora as $dh) {
+        $stats_extras['distribuicao_hora'][$dh['hr']] = $dh['qtd'];
+    }
+
     // 14-17. Retenção e Recência
     $stats_extras['ultimos_7_dias'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos WHERE data_acesso >= (CURDATE() - INTERVAL 7 DAY)")->fetchColumn();
     $stats_extras['ultimos_30_dias'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos WHERE data_acesso >= (CURDATE() - INTERVAL 30 DAY)")->fetchColumn();
     $stats_extras['acessos_ontem'] = $pdo->query("SELECT COUNT(*) FROM historico_acessos WHERE DATE(data_acesso) = (CURDATE() - INTERVAL 1 DAY)")->fetchColumn();
+    $stats_extras['ips_unicos'] = $pdo->query("SELECT COUNT(DISTINCT ip_address) FROM historico_acessos")->fetchColumn();
 
     $crescimento = 0;
     if($stats_extras['acessos_ontem'] > 0) {
@@ -164,8 +184,24 @@ try {
         $chart_estados_data[] = $e['qtd'];
     }
 
+    $chart_cidades_labels = [];
+    $chart_cidades_data = [];
+    foreach($stats_extras['top_cidades'] as $c) {
+        $chart_cidades_labels[] = $c['cidade'];
+        $chart_cidades_data[] = $c['qtd'];
+    }
+
     $chart_browsers_labels = array_keys($stats_extras['top_browsers']);
     $chart_browsers_data = array_values($stats_extras['top_browsers']);
+
+    $chart_oss_labels = array_keys($stats_extras['top_oss']);
+    $chart_oss_data = array_values($stats_extras['top_oss']);
+
+    $chart_tendencia_labels = array_map(function($d) { return date('d/m', strtotime($d)); }, array_keys($stats_extras['tendencia_14d']));
+    $chart_tendencia_data = array_values($stats_extras['tendencia_14d']);
+
+    $chart_horas_labels = array_map(function($h) { return $h.'h'; }, array_keys($stats_extras['distribuicao_hora']));
+    $chart_horas_data = array_values($stats_extras['distribuicao_hora']);
 
     // Pega os últimos 100 acessos para a tabela
     $stmtHistorico = $pdo->query("SELECT * FROM historico_acessos ORDER BY data_acesso DESC LIMIT 100");
@@ -592,20 +628,20 @@ function getOSName($user_agent) {
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Análise completa de tráfego, audiência e retenção do site.</p>
 
             <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">1. Visão Geral (Volume)</h4>
-            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 30px;">
+            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; margin-bottom: 30px;">
                 <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
-                    <div style="font-size: 0.80rem; color: var(--text-muted); text-transform: uppercase;">Acessos Hoje</div>
+                    <div style="font-size: 0.80rem; color: var(--text-muted); text-transform: uppercase;">Hoje</div>
                     <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);"><?php echo $stats_acessos['hoje']; ?></div>
                     <div style="font-size: 0.75rem; color: <?php echo $stats_extras['crescimento_diario'] >= 0 ? 'var(--success)' : '#EF4444'; ?>;">
                         <i class="fas fa-arrow-<?php echo $stats_extras['crescimento_diario'] >= 0 ? 'up' : 'down'; ?>"></i> <?php echo abs($stats_extras['crescimento_diario']); ?>% vs Ontem
                     </div>
                 </div>
                 <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
-                    <div style="font-size: 0.80rem; color: var(--text-muted); text-transform: uppercase;">Últimos 7 Dias</div>
+                    <div style="font-size: 0.80rem; color: var(--text-muted); text-transform: uppercase;">7 Dias</div>
                     <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);"><?php echo $stats_extras['ultimos_7_dias']; ?></div>
                 </div>
                 <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
-                    <div style="font-size: 0.80rem; color: var(--text-muted); text-transform: uppercase;">Últimos 30 Dias</div>
+                    <div style="font-size: 0.80rem; color: var(--text-muted); text-transform: uppercase;">30 Dias</div>
                     <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);"><?php echo $stats_extras['ultimos_30_dias']; ?></div>
                 </div>
                 <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
@@ -613,25 +649,47 @@ function getOSName($user_agent) {
                     <div style="font-size: 1.8rem; font-weight: 700; color: var(--success);"><?php echo $stats_acessos['total']; ?></div>
                 </div>
                 <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.80rem; color: var(--text-muted); text-transform: uppercase;">IPs Únicos</div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: #8B5CF6;"><?php echo $stats_extras['ips_unicos']; ?></div>
+                </div>
+                <div style="background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
                     <div style="font-size: 0.80rem; color: var(--text-muted); text-transform: uppercase;">Melhor Dia</div>
                     <div style="font-size: 1.2rem; font-weight: 700; color: #F59E0B; margin-top: 5px;"><?php echo $stats_extras['melhor_dia']; ?></div>
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; margin-bottom: 30px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
 
                 <div>
-                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">2. Acessos por Dia da Semana</h4>
+                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">2. Tendência (14 Dias)</h4>
+                    <div style="background: var(--bg-light); padding: 15px; border-radius: 8px; height: 300px; display: flex; align-items: center; justify-content: center;">
+                        <canvas id="chartTendencia"></canvas>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">3. Distribuição por Hora (0h - 23h)</h4>
+                    <div style="background: var(--bg-light); padding: 15px; border-radius: 8px; height: 300px; display: flex; align-items: center; justify-content: center;">
+                        <canvas id="chartHoras"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+
+                <div>
+                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">4. Acessos por Dia da Semana</h4>
                     <div style="background: var(--bg-light); padding: 15px; border-radius: 8px; height: 300px; display: flex; align-items: center; justify-content: center;">
                         <canvas id="chartDias"></canvas>
                     </div>
                 </div>
 
                 <div>
-                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">3. Top Estados</h4>
+                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">5. Top Cidades</h4>
                     <div style="background: var(--bg-light); padding: 15px; border-radius: 8px; height: 300px; display: flex; align-items: center; justify-content: center;">
-                        <?php if(count($chart_estados_labels) > 0): ?>
-                            <canvas id="chartEstados"></canvas>
+                        <?php if(count($chart_cidades_labels) > 0): ?>
+                            <canvas id="chartCidades"></canvas>
                         <?php else: ?>
                             <p style="color: var(--text-muted);">Nenhum dado geográfico disponível ainda.</p>
                         <?php endif; ?>
@@ -639,24 +697,19 @@ function getOSName($user_agent) {
                 </div>
             </div>
 
-            <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">4. Dispositivos, Tecnologia e Redes Sociais</h4>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; background: var(--bg-light); padding: 20px; border-radius: 8px;">
-                <div>
+            <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">6. Dispositivos, Tecnologia e Redes Sociais</h4>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 40px; background: var(--bg-light); padding: 20px; border-radius: 8px;">
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
                     <h5 style="margin-bottom: 10px; color: var(--text-dark);">Telas e Dispositivos</h5>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem;">
-                        <span><i class="fas fa-mobile-alt"></i> Mobile: <?php echo $stats_extras['devices']['Mobile']; ?></span>
-                        <strong><?php echo $stats_extras['perc_mobile']; ?>%</strong>
+                    <div style="width: 100%; max-width: 180px; height: 180px; margin-bottom: 15px;">
+                        <canvas id="chartDevices"></canvas>
                     </div>
-                    <div style="width: 100%; background: #E2E8F0; height: 8px; border-radius: 4px; margin-bottom: 15px;">
-                        <div style="width: <?php echo $stats_extras['perc_mobile']; ?>%; background: var(--primary); height: 100%; border-radius: 4px;"></div>
-                    </div>
+                </div>
 
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem;">
-                        <span><i class="fas fa-desktop"></i> Desktop: <?php echo $stats_extras['devices']['Desktop']; ?></span>
-                        <strong><?php echo $stats_extras['perc_desktop']; ?>%</strong>
-                    </div>
-                    <div style="width: 100%; background: #E2E8F0; height: 8px; border-radius: 4px;">
-                        <div style="width: <?php echo $stats_extras['perc_desktop']; ?>%; background: var(--secondary); height: 100%; border-radius: 4px;"></div>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <h5 style="margin-bottom: 10px; color: var(--text-dark);">Top OS</h5>
+                    <div style="width: 100%; max-width: 180px; height: 180px; margin-bottom: 15px;">
+                        <canvas id="chartOS"></canvas>
                     </div>
                 </div>
 
@@ -703,8 +756,29 @@ function getOSName($user_agent) {
                                     }
                                 ?>
                             </td>
-                            <td><?php echo getOSName($acesso['user_agent']); ?></td>
-                            <td><?php echo getBrowserName($acesso['user_agent']); ?></td>
+                            <td>
+                                <?php
+                                    $os = getOSName($acesso['user_agent']);
+                                    $icon = 'fa-desktop';
+                                    if($os == 'Windows') $icon = 'fa-windows';
+                                    if($os == 'Android') $icon = 'fa-android text-success';
+                                    if($os == 'iOS' || $os == 'Mac OS') $icon = 'fa-apple';
+                                    if($os == 'Linux') $icon = 'fa-linux';
+                                    echo "<i class='fab $icon' style='margin-right: 5px; color: var(--text-muted);'></i>" . $os;
+                                ?>
+                            </td>
+                            <td>
+                                <?php
+                                    $br = getBrowserName($acesso['user_agent']);
+                                    $bicon = 'fa-globe';
+                                    if($br == 'Chrome') $bicon = 'fa-chrome text-primary';
+                                    if($br == 'Firefox') $bicon = 'fa-firefox-browser text-warning';
+                                    if($br == 'Safari') $bicon = 'fa-safari text-info';
+                                    if($br == 'Edge') $bicon = 'fa-edge text-primary';
+                                    if($br == 'Opera') $bicon = 'fa-opera text-danger';
+                                    echo "<i class='fab $bicon' style='margin-right: 5px; color: var(--text-muted);'></i>" . $br;
+                                ?>
+                            </td>
                         </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -730,6 +804,21 @@ function getOSName($user_agent) {
 
         const chartBrowsersLabels = <?php echo json_encode($chart_browsers_labels); ?>;
         const chartBrowsersData = <?php echo json_encode($chart_browsers_data); ?>;
+
+        const chartOSLabels = <?php echo json_encode($chart_oss_labels); ?>;
+        const chartOSData = <?php echo json_encode($chart_oss_data); ?>;
+
+        const chartTendenciaLabels = <?php echo json_encode($chart_tendencia_labels); ?>;
+        const chartTendenciaData = <?php echo json_encode($chart_tendencia_data); ?>;
+
+        const chartHorasLabels = <?php echo json_encode($chart_horas_labels); ?>;
+        const chartHorasData = <?php echo json_encode($chart_horas_data); ?>;
+
+        const chartCidadesLabels = <?php echo json_encode($chart_cidades_labels); ?>;
+        const chartCidadesData = <?php echo json_encode($chart_cidades_data); ?>;
+
+        const chartDevicesLabels = ['Mobile', 'Desktop'];
+        const chartDevicesData = [<?php echo $stats_extras['devices']['Mobile']; ?>, <?php echo $stats_extras['devices']['Desktop']; ?>];
 
         document.addEventListener('DOMContentLoaded', function() {
             // 1. Gráfico de Dias da Semana (Bar)
@@ -810,6 +899,122 @@ function getOSName($user_agent) {
                     }
                 });
             }
+
+            // 4. Gráfico de Tendência 14 Dias (Line)
+            const ctxTendencia = document.getElementById('chartTendencia');
+            if (ctxTendencia) {
+                new Chart(ctxTendencia, {
+                    type: 'line',
+                    data: {
+                        labels: chartTendenciaLabels,
+                        datasets: [{
+                            label: 'Acessos por Dia',
+                            data: chartTendenciaData,
+                            borderColor: '#8B5CF6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: '#8B5CF6'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+
+            // 5. Gráfico de Distribuição por Hora (Bar/Line)
+            const ctxHoras = document.getElementById('chartHoras');
+            if (ctxHoras) {
+                new Chart(ctxHoras, {
+                    type: 'bar',
+                    data: {
+                        labels: chartHorasLabels,
+                        datasets: [{
+                            label: 'Acessos por Hora',
+                            data: chartHorasData,
+                            backgroundColor: 'rgba(245, 158, 11, 0.7)',
+                            borderRadius: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+
+            // 6. Gráfico Top Cidades (Bar Horizontal)
+            const ctxCidades = document.getElementById('chartCidades');
+            if (ctxCidades && chartCidadesLabels.length > 0) {
+                new Chart(ctxCidades, {
+                    type: 'bar',
+                    data: {
+                        labels: chartCidadesLabels,
+                        datasets: [{
+                            label: 'Acessos',
+                            data: chartCidadesData,
+                            backgroundColor: 'rgba(244, 63, 94, 0.7)',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { beginAtZero: true } }
+                    }
+                });
+            }
+
+            // 7. Gráfico Top OS (Doughnut)
+            const ctxOS = document.getElementById('chartOS');
+            if (ctxOS && chartOSLabels.length > 0) {
+                new Chart(ctxOS, {
+                    type: 'doughnut',
+                    data: {
+                        labels: chartOSLabels,
+                        datasets: [{
+                            data: chartOSData,
+                            backgroundColor: ['#10B981', '#3B82F6', '#8B5CF6', '#F43F5E', '#64748B'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
+                    }
+                });
+            }
+
+            // 8. Gráfico Devices (Pie)
+            const ctxDevices = document.getElementById('chartDevices');
+            if (ctxDevices) {
+                new Chart(ctxDevices, {
+                    type: 'pie',
+                    data: {
+                        labels: chartDevicesLabels,
+                        datasets: [{
+                            data: chartDevicesData,
+                            backgroundColor: ['#F59E0B', '#0EA5E9'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
+                    }
+                });
+            }
+
         });
     </script>
 </body>
