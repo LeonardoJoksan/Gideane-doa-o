@@ -138,13 +138,14 @@ foreach($galeriaAll as $item) {
     </header>
 
     <?php if (count($videos_medico) > 0): ?>
-    <section class="section bg-light" id="videos-medico" style="padding-bottom: 50px;">
-        <div class="container max-w-800">
-            <h2 class="section-title text-center">Vídeos do médico</h2>
-            <div style="display: flex; flex-direction: column; gap: 30px; margin-top: 30px;">
+    <section class="section destaque-medico" id="videos-medico">
+        <div class="container">
+            <h2 class="section-title text-center" style="color: white; margin-bottom: 8px;">Opinião do Especialista</h2>
+            <p class="section-subtitle text-center" style="color: #94A3B8; margin-bottom: 40px;">Vídeos explicativos sobre a gravidade e urgência da Braquiterapia Ocular.</p>
+            <div class="videos-medico-grid">
                 <?php foreach($videos_medico as $video): ?>
-                <div style="width: 100%; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-md);">
-                    <iframe src="https://www.youtube.com/embed/<?php echo htmlspecialchars($video['midia_url']); ?>?modestbranding=1&rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="width: 100%; aspect-ratio: 16/9; display: block;"></iframe>
+                <div class="video-card">
+                    <iframe src="https://www.youtube.com/embed/<?php echo htmlspecialchars($video['midia_url']); ?>?modestbranding=1&rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen title="Vídeo Explicativo do Médico" style="width: 100%; aspect-ratio: 16/9; display: block; border: none;"></iframe>
                 </div>
                 <?php endforeach; ?>
             </div>

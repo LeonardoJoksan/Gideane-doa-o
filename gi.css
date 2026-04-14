@@ -118,14 +118,30 @@ body {
 
 .badge-urgency {
      display: inline-block;
-     background: rgba(239, 68, 68, 0.2);
-     color: #FCA5A5;
-     padding: 6px 16px;
-     border-radius: 50px;
-     font-size: 0.9rem;
-     font-weight: 600;
-     margin-bottom: 20px;
-     border: 1px solid rgba(239, 68, 68, 0.4);
+     background: #EF4444;
+     color: white;
+     padding: 12px 24px;
+     border-radius: 8px;
+     font-size: 1.2rem;
+     font-weight: 800;
+     margin-bottom: 24px;
+     border: 2px solid #DC2626;
+     text-transform: uppercase;
+     letter-spacing: 1px;
+     box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+     animation: pulse-danger 1.5s infinite;
+}
+
+@keyframes pulse-danger {
+     0% {
+          box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+     }
+     70% {
+          box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
+     }
+     100% {
+          box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+     }
 }
 
 .hero h1 {
@@ -325,6 +341,34 @@ body {
      font-size: 1.1rem;
      color: var(--text-muted);
      margin-bottom: 48px;
+}
+
+/* --- VÍDEOS DO MÉDICO --- */
+.destaque-medico {
+     background-color: var(--primary);
+     padding: 80px 0;
+     border-top: 4px solid var(--secondary);
+     border-bottom: 4px solid var(--secondary);
+}
+
+.videos-medico-grid {
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+     gap: 30px;
+     width: 100%;
+}
+
+.video-card {
+     background: #1E293B;
+     border-radius: 12px;
+     overflow: hidden;
+     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+     border: 1px solid #334155;
+     transition: transform 0.3s;
+}
+
+.video-card:hover {
+     transform: translateY(-5px);
 }
 
 /* --- HISTÓRIA --- */

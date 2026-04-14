@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
                const distance = targetDate - now;
 
                if (distance < 0) {
-                    countdownEl.innerHTML = '<i class="fas fa-clock"></i> O prazo terminou';
+                    countdownEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> O prazo terminou';
                     return;
                }
 
@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-               countdownEl.innerHTML = `<i class="fas fa-clock"></i> Faltam: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+               countdownEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> URGENTE! FALTAM: ${days}d ${hours}h ${minutes}m ${seconds}s`;
           }
 
           updateCountdown(); // Call immediately
