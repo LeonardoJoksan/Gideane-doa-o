@@ -6,9 +6,49 @@ require 'conexao.php';
 $idiomas_suportados = ['pt', 'en', 'es'];
 $lang = isset($_GET['lang']) && in_array($_GET['lang'], $idiomas_suportados) ? $_GET['lang'] : 'pt';
 
-// Carrega as traduções
+// Carrega as traduções estáticas
 require 'idiomas.php';
 $t = $traducoes[$lang];
+
+// Função de Tradução Dinâmica Gratuita (Google Translate API)
+function traduzirTextoDinamico($texto, $idioma_destino) {
+    if ($idioma_destino === 'pt' || empty(trim($texto))) return $texto;
+
+    // Pequeno cache em arquivo para evitar bloqueios da API
+    $hash = md5($texto . $idioma_destino);
+    $arquivo_cache = "uploads/cache_trad_" . $hash . ".txt";
+
+    if (file_exists($arquivo_cache)) {
+        return file_get_contents($arquivo_cache);
+    }
+
+    $url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=pt&tl=" . $idioma_destino . "&dt=t&q=" . urlencode($texto);
+
+    $opcoes = [
+        "http" => [
+            "header" => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)\r\n"
+        ]
+    ];
+    $contexto = stream_context_create($opcoes);
+    $resposta = @file_get_contents($url, false, $contexto);
+
+    if ($resposta) {
+        $json = json_decode($resposta, true);
+        if (isset($json[0]) && is_array($json[0])) {
+            $traducao_final = '';
+            foreach ($json[0] as $linha) {
+                $traducao_final .= $linha[0];
+            }
+            // Salva no cache
+            if (!is_dir('uploads')) mkdir('uploads', 0777, true);
+            file_put_contents($arquivo_cache, $traducao_final);
+            return $traducao_final;
+        }
+    }
+
+    // Se falhar, retorna o original em PT
+    return $texto;
+}
 
 // Busca configurações principais (valores dinâmicos)
 $stmt = $pdo->query("SELECT * FROM configuracoes LIMIT 1");
@@ -346,7 +386,7 @@ try {
                         <i class="fas fa-play-circle"></i>
                     </div>
                     <div class="medico-thumb-title">
-                        <?php echo htmlspecialchars($video['titulo']); ?>
+                        <?php echo htmlspecialchars(traduzirTextoDinamico($video['titulo'], $lang)); ?>
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -364,7 +404,7 @@ try {
                     <?php foreach ($documentos as $doc): ?>
                         <a href="<?php echo htmlspecialchars($doc['caminho_arquivo']); ?>" target="_blank" class="doc-card">
                             <i class="<?php echo htmlspecialchars($doc['icone']); ?>"></i>
-                            <span><?php echo htmlspecialchars($doc['nome']); ?></span>
+                            <span><?php echo htmlspecialchars(traduzirTextoDinamico($doc['nome'], $lang)); ?></span>
                         </a>
                     <?php endforeach; ?>
                 <?php else: ?>
@@ -440,7 +480,7 @@ try {
                             <div class="timeline-content <?php echo $card_class; ?>">
                                 <h3>
                                     <?php echo $icon_html; ?>
-                                    <?php echo htmlspecialchars($atualizacao['titulo']); ?>
+                                    <?php echo htmlspecialchars(traduzirTextoDinamico($atualizacao['titulo'], $lang)); ?>
                                 </h3>
                                 
                                 <p>
@@ -450,13 +490,15 @@ try {
                                             $descricao_destacada = str_replace('R$ ' . $valorStr, $destaque_valor, $atualizacao['descricao']);
                                             // Limpa as palavras chave do texto original para não ficar repetitivo
                                             $descricao_destacada = str_ireplace(['via pix', 'pelo pix', 'via mercado pago', 'pelo mercado pago'], '', $descricao_destacada);
-                                            echo nl2br($descricao_destacada);
+                                            echo nl2br(traduzirTextoDinamico($descricao_destacada, $lang));
                                         ?>
                                         <?php echo $bg_icon_html; ?>
                                     <?php else: ?>
                                         <?php 
                                             // Se não for doação grande, ainda tenta colocar o badge se achar as palavras
-                                            $desc_normal = nl2br(htmlspecialchars($atualizacao['descricao']));
+                                            $desc_normal = htmlspecialchars($atualizacao['descricao']);
+                                            $desc_normal = traduzirTextoDinamico($desc_normal, $lang);
+                                            $desc_normal = nl2br($desc_normal);
                                             if($metodo_badge != ''){
                                                 $desc_normal .= " " . $metodo_badge;
                                                 $desc_normal = str_ireplace(['via pix', 'pelo pix', 'via mercado pago', 'pelo mercado pago'], '', $desc_normal);
