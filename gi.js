@@ -55,8 +55,19 @@ document.addEventListener("DOMContentLoaded", () => {
                const now = new Date().getTime();
                const distance = targetDate - now;
 
+               // Identifica o idioma atual via URL ou usa 'pt' como padrão
+               const urlParams = new URLSearchParams(window.location.search);
+               const currentLang = urlParams.get('lang') || 'pt';
+
+               // Dicionário do Countdown
+               const tCountdown = {
+                    'pt': { term: 'O prazo terminou', urg: 'URGENTE! FALTAM:' },
+                    'en': { term: 'Deadline passed', urg: 'URGENT! TIME LEFT:' },
+                    'es': { term: 'Plazo finalizado', urg: '¡URGENTE! FALTAN:' }
+               };
+
                if (distance < 0) {
-                    countdownEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> O prazo terminou';
+                    countdownEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${tCountdown[currentLang].term}`;
                     return;
                }
 
@@ -65,7 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-               countdownEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> URGENTE! FALTAM: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+               countdownEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${tCountdown[currentLang].urg} ${days}d ${hours}h ${minutes}m ${seconds}s`;
           }
 
           updateCountdown(); // Call immediately

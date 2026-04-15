@@ -2,6 +2,14 @@
 // index.php
 require 'conexao.php';
 
+// Sistema de Idiomas Simples
+$idiomas_suportados = ['pt', 'en', 'es'];
+$lang = isset($_GET['lang']) && in_array($_GET['lang'], $idiomas_suportados) ? $_GET['lang'] : 'pt';
+
+// Carrega as traduções
+require 'idiomas.php';
+$t = $traducoes[$lang];
+
 // Busca configurações principais (valores dinâmicos)
 $stmt = $pdo->query("SELECT * FROM configuracoes LIMIT 1");
 $config = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -40,13 +48,13 @@ try {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="<?php echo $lang; ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ajude a Gi a Vencer o Câncer Ocular | Braquiterapia Urgente</title>
+    <title><?php echo $t['meta_title']; ?></title>
     
-    <meta name="description" content="A Gideane foi diagnosticada com um tumor ocular maligno de 6mm e tem apenas 4 semanas para realizar a cirurgia de Braquiterapia. Ajude a salvar a vida da Gi doando qualquer valor.">
+    <meta name="description" content="<?php echo $t['meta_desc']; ?>">
     <meta name="keywords" content="braquiterapia ocular, câncer no olho, ajuda para cirurgia, vaquinha online, doação, Gideane Sousa Pereira, tumor ocular maligno, ajuda financeira, solidariedade">
     <meta name="author" content="Amigos e Familiares da Gi">
     <meta name="robots" content="index, follow">
@@ -65,33 +73,39 @@ try {
 </head>
 <body style="overflow-x: hidden; width: 100%;">
 
+    <div style="position: absolute; top: 15px; right: 15px; z-index: 100; display: flex; gap: 10px; background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 20px; backdrop-filter: blur(5px);">
+        <a href="?lang=pt" style="opacity: <?php echo $lang == 'pt' ? '1' : '0.5'; ?>; transition: 0.3s; text-decoration: none; font-size: 1.2rem;">🇧🇷</a>
+        <a href="?lang=en" style="opacity: <?php echo $lang == 'en' ? '1' : '0.5'; ?>; transition: 0.3s; text-decoration: none; font-size: 1.2rem;">🇺🇸</a>
+        <a href="?lang=es" style="opacity: <?php echo $lang == 'es' ? '1' : '0.5'; ?>; transition: 0.3s; text-decoration: none; font-size: 1.2rem;">🇪🇸</a>
+    </div>
+
     <header class="hero">
         <div class="container hero-wrapper">
             <div class="hero-content">
-                <span class="badge-urgency" id="countdown-urgency"><i class="fas fa-clock"></i> Faltam apenas 4 semanas</span>
-                <h1>Ajude a Gi a Vencer o Câncer Ocular</h1>
-                <p>A Gideane precisa de uma <strong>Braquiterapia Ocular</strong> urgente para secar um tumor e salvar sua vida e visão. Cada doação é um passo rumo à cura.</p>
+                <span class="badge-urgency" id="countdown-urgency"><i class="fas fa-clock"></i> <?php echo $t['hero_badge']; ?></span>
+                <h1><?php echo $t['hero_title']; ?></h1>
+                <p><?php echo $t['hero_desc']; ?></p>
                 
                 <div class="progress-card">
                     <div class="progress-stats">
                         <div class="stat">
-                            <span class="stat-label">Arrecadado</span>
+                            <span class="stat-label"><?php echo $t['stat_raised']; ?></span>
                             <span class="stat-value text-green">R$ <?php echo $arrecadado_formatado; ?></span>
                         </div>
                         <div class="stat text-right">
-                            <span class="stat-label">Meta Total</span>
+                            <span class="stat-label"><?php echo $t['stat_goal']; ?></span>
                             <span class="stat-value">R$ <?php echo $meta_formatada; ?></span>
                         </div>
                     </div>
                     <div class="progress-track">
                         <div class="progress-fill" id="progressBar" data-percent="<?php echo round($porcentagem, 2); ?>%"></div>
                     </div>
-                    <p class="progress-percent"><?php echo $porcentagem_formatada; ?>% da meta alcançada</p>
+                    <p class="progress-percent"><?php echo $porcentagem_formatada; ?><?php echo $t['stat_percent']; ?></p>
                 </div>
 
                 <div class="hero-actions">
-                    <a href="#doar" class="btn btn-primary"><i class="fas fa-heart"></i> Quero Doar Agora</a>
-                    <a href="#historia" class="btn btn-outline">Conheça a História</a>
+                    <a href="#doar" class="btn btn-primary"><i class="fas fa-heart"></i> <?php echo $t['hero_btn_donate']; ?></a>
+                    <a href="#historia" class="btn btn-outline"><?php echo $t['hero_btn_story']; ?></a>
                 </div>
             </div>
 
@@ -268,40 +282,52 @@ try {
 
     <section class="section destaque-doar" id="doar">
         <div class="container">
-            <h2 class="section-title text-center" style="color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Como você pode ajudar?</h2>
+            <h2 class="section-title text-center" style="color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3);"><?php echo $t['donate_title']; ?></h2>
             <div class="grid cards-grid">
                 
-                <div class="card donate-card">
-                    <div class="card-icon"><i class="fab fa-pix"></i></div>
-                    <h3>Transferência PIX</h3>
-                    <p>Utilize a chave abaixo no seu aplicativo do banco.</p>
-                    <div class="pix-info">
-                        <p style="margin-bottom: 5px;"><strong>Chave (Email):</strong></p>
-                        <div class="copy-group" style="margin-bottom: 15px;">
-                            <input type="text" id="pixKeyEmail" value="<?php echo htmlspecialchars($config['chave_pix']); ?>" readonly>
-                            <button onclick="copyPixKeyEmail()" class="btn-copy" id="btnCopyEmail"><i class="fas fa-copy"></i></button>
+                <?php if ($lang == 'pt'): ?>
+                    <!-- Formas de Pagamento Locais (PIX/MP) -->
+                    <div class="card donate-card">
+                        <div class="card-icon"><i class="fab fa-pix"></i></div>
+                        <h3><?php echo $t['donate_pix']; ?></h3>
+                        <p><?php echo $t['donate_pix_desc']; ?></p>
+                        <div class="pix-info">
+                            <p style="margin-bottom: 5px;"><strong><?php echo $t['donate_pix_key']; ?></strong></p>
+                            <div class="copy-group" style="margin-bottom: 15px;">
+                                <input type="text" id="pixKeyEmail" value="<?php echo htmlspecialchars($config['chave_pix']); ?>" readonly>
+                                <button onclick="copyPixKeyEmail()" class="btn-copy" id="btnCopyEmail"><i class="fas fa-copy"></i></button>
+                            </div>
+                            <p><strong><?php echo $t['donate_pix_name']; ?></strong><br> <?php echo htmlspecialchars($config['nome_beneficiario']); ?></p>
                         </div>
-                        <p><strong>Nome:</strong><br> <?php echo htmlspecialchars($config['nome_beneficiario']); ?></p>
                     </div>
-                </div>
 
-                <div class="card donate-card highlight-card">
-                    <div class="card-badge">Mais Rápido</div>
-                    <div class="card-icon"><i class="fas fa-qrcode"></i></div>
-                    <h3>PIX Copia e Cola</h3>
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=<?php echo urlencode($config['codigo_pix_copia_cola']); ?>" alt="QR Code PIX" class="qr-image">
-                    <div class="copy-group">
-                        <input type="text" id="pixCode" value="<?php echo htmlspecialchars($config['codigo_pix_copia_cola']); ?>" readonly>
-                        <button onclick="copyPix()" class="btn-copy" id="btnCopy"><i class="fas fa-copy"></i></button>
+                    <div class="card donate-card highlight-card">
+                        <div class="card-badge">Mais Rápido</div>
+                        <div class="card-icon"><i class="fas fa-qrcode"></i></div>
+                        <h3>PIX Copia e Cola</h3>
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=<?php echo urlencode($config['codigo_pix_copia_cola']); ?>" alt="QR Code PIX" class="qr-image">
+                        <div class="copy-group">
+                            <input type="text" id="pixCode" value="<?php echo htmlspecialchars($config['codigo_pix_copia_cola']); ?>" readonly>
+                            <button onclick="copyPix()" class="btn-copy" id="btnCopy"><i class="fas fa-copy"></i></button>
+                        </div>
                     </div>
-                </div>
 
-                <div class="card donate-card">
-                    <div class="card-icon mp-icon"><i class="fas fa-handshake"></i></div>
-                    <h3>Cartão de Crédito</h3>
-                    <p>Doe com segurança utilizando o Mercado Pago.</p>
-                    <a href="doar.php" class="btn btn-mp"><i class="fas fa-credit-card"></i> Doar pelo Mercado Pago</a>
-                </div>
+                    <div class="card donate-card">
+                        <div class="card-icon mp-icon"><i class="fas fa-handshake"></i></div>
+                        <h3><?php echo $t['donate_mp_title']; ?></h3>
+                        <p><?php echo $t['donate_mp_desc']; ?></p>
+                        <a href="doar.php" class="btn btn-mp"><i class="fas fa-credit-card"></i> <?php echo $t['donate_mp_btn']; ?></a>
+                    </div>
+                <?php else: ?>
+                    <!-- Formas de Pagamento Internacionais (Stripe) -->
+                    <div class="card donate-card highlight-card" style="grid-column: 1 / -1; max-width: 600px; margin: 0 auto;">
+                        <div class="card-icon mp-icon" style="color: #6366F1;"><i class="fab fa-stripe"></i></div>
+                        <h3><?php echo $t['donate_stripe_title']; ?></h3>
+                        <p><?php echo $t['donate_stripe_desc']; ?></p>
+                        <a href="doar_stripe.php" class="btn btn-mp" style="background: #6366F1;"><i class="fas fa-globe"></i> <?php echo $t['donate_stripe_btn']; ?></a>
+                    </div>
+                <?php endif; ?>
+
             </div>
         </div>
     </section>
@@ -309,8 +335,8 @@ try {
     <?php if (count($videos_medico) > 0): ?>
     <section class="section bg-light" id="videos-medico">
         <div class="container max-w-800">
-            <h2 class="section-title text-center">Tire suas Dúvidas com o Especialista</h2>
-            <p class="section-subtitle text-center">Vídeos explicativos sobre a gravidade e urgência da Braquiterapia Ocular.</p>
+            <h2 class="section-title text-center"><?php echo $t['nav_videos']; ?></h2>
+            <p class="section-subtitle text-center"><?php echo $t['nav_videos_sub']; ?></p>
 
             <div class="medico-videos-grid">
                 <?php foreach($videos_medico as $video): ?>
@@ -331,8 +357,8 @@ try {
 
     <section class="section" id="transparencia">
         <div class="container">
-            <h2 class="section-title text-center">Transparência</h2>
-            <p class="section-subtitle text-center">Acompanhe nossos exames e orçamentos médicos.</p>
+            <h2 class="section-title text-center"><?php echo $t['transparency_title']; ?></h2>
+            <p class="section-subtitle text-center"><?php echo $t['transparency_sub']; ?></p>
             <div class="grid docs-grid">
                 <?php if (count($documentos) > 0): ?>
                     <?php foreach ($documentos as $doc): ?>
@@ -350,7 +376,7 @@ try {
 
     <section class="section bg-light">
         <div class="container max-w-800">
-            <h2 class="section-title text-center">Mural de Atualizações</h2>
+            <h2 class="section-title text-center"><?php echo $t['updates_title']; ?></h2>
             <div class="timeline" id="timelineMural">
                 <?php if (count($atualizacoes) > 0): ?>
                     <?php 
@@ -444,13 +470,13 @@ try {
 
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <p class="text-center" style="color: var(--text-muted);">Ainda não há atualizações.</p>
+                    <p class="text-center" style="color: var(--text-muted);"><?php echo $t['updates_empty']; ?></p>
                 <?php endif; ?>
             </div>
 
             <?php if (count($atualizacoes) > 10): ?>
                 <div class="text-center" style="margin-top: 30px;">
-                    <button id="btnLoadMoreUpdates" class="btn btn-outline" style="border-color: var(--secondary); color: var(--secondary);">Carregar mais atualizações <i class="fas fa-chevron-down"></i></button>
+                    <button id="btnLoadMoreUpdates" class="btn btn-outline" style="border-color: var(--secondary); color: var(--secondary);"><i class="fas fa-chevron-down"></i></button>
                 </div>
             <?php endif; ?>
 
@@ -460,11 +486,11 @@ try {
     <footer class="footer">
         <div class="container footer-content">
             <div class="footer-info">
-                <h3>Juntos pela Gi</h3>
-                <p>Obrigado por dedicar seu tempo e amor a essa causa.</p>
+                <h3><?php echo $t['footer_title']; ?></h3>
+                <p><?php echo $t['footer_desc']; ?></p>
             </div>
             <div class="social-links">
-                <a href="#" onclick="compartilharZap()" class="social-btn whatsapp"><i class="fab fa-whatsapp"></i> Compartilhar</a>
+                <a href="#" onclick="compartilharZap()" class="social-btn whatsapp"><i class="fab fa-whatsapp"></i></a>
             </div>
         </div>
     </footer>
