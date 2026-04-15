@@ -31,6 +31,57 @@ document.addEventListener("DOMContentLoaded", () => {
                answer.classList.toggle('open');
           });
      });
+
+     // --- Lógica "Leia mais" na História ---
+     const btnLeiaMais = document.getElementById('btn-leia-mais');
+     const restanteHistoria = document.getElementById('restante-historia');
+
+     if (btnLeiaMais && restanteHistoria) {
+          btnLeiaMais.addEventListener('click', () => {
+               restanteHistoria.style.display = 'block';
+               restanteHistoria.style.animation = 'fadeInUp 0.6s ease forwards';
+               btnLeiaMais.style.display = 'none';
+          });
+     }
+
+     // --- Lógica do Countdown (Contagem regressiva) ---
+     const countdownEl = document.getElementById('countdown-urgency');
+     if (countdownEl) {
+          // Data alvo: 4 semanas após 08/04/2026 00:00:00
+          const startDate = new Date("2026-04-08T00:00:00").getTime();
+          const targetDate = startDate + (4 * 7 * 24 * 60 * 60 * 1000); // 4 semanas em milissegundos
+
+          function updateCountdown() {
+               const now = new Date().getTime();
+               const distance = targetDate - now;
+
+               // Identifica o idioma atual via URL ou usa 'pt' como padrão
+               const urlParams = new URLSearchParams(window.location.search);
+               const currentLang = urlParams.get('lang') || 'pt';
+
+               // Dicionário do Countdown
+               const tCountdown = {
+                    'pt': { term: 'O prazo terminou', urg: 'URGENTE! FALTAM:' },
+                    'en': { term: 'Deadline passed', urg: 'URGENT! TIME LEFT:' },
+                    'es': { term: 'Plazo finalizado', urg: '¡URGENTE! FALTAN:' }
+               };
+
+               if (distance < 0) {
+                    countdownEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${tCountdown[currentLang].term}`;
+                    return;
+               }
+
+               const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+               const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+               const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+               const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+               countdownEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${tCountdown[currentLang].urg} ${days}d ${hours}h ${minutes}m ${seconds}s`;
+          }
+
+          updateCountdown(); // Call immediately
+          setInterval(updateCountdown, 1000); // Update every second
+     }
 });
 
 // ----------------------------------------------------
@@ -164,6 +215,49 @@ document.addEventListener("DOMContentLoaded", () => {
                // Se não houver mais nenhum escondido, some com o botão
                if (document.querySelectorAll('.hidden-update').length === 0) {
                     btnLoadMore.style.display = 'none';
+               }
+          });
+     }
+});
+
+// ==========================================
+// 8. FUNÇÕES DO MODAL DE VÍDEO
+// ==========================================
+function openVideoModal(videoId) {
+     const modal = document.getElementById('videoModal');
+     const container = document.getElementById('videoModalContainer');
+
+     if (modal && container) {
+          // Injeta o iframe com autoplay
+          container.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&modestbranding=1&rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+          // Mostra o modal
+          modal.classList.add('active');
+          // Impede rolagem do fundo
+          document.body.style.overflow = 'hidden';
+     }
+}
+
+function closeVideoModal() {
+     const modal = document.getElementById('videoModal');
+     const container = document.getElementById('videoModalContainer');
+
+     if (modal && container) {
+          // Esconde o modal
+          modal.classList.remove('active');
+          // Remove o iframe para parar o vídeo
+          container.innerHTML = '';
+          // Restaura a rolagem
+          document.body.style.overflow = '';
+     }
+}
+
+// Fechar modal ao clicar fora do conteúdo
+document.addEventListener('DOMContentLoaded', () => {
+     const modal = document.getElementById('videoModal');
+     if (modal) {
+          modal.addEventListener('click', (e) => {
+               if (e.target === modal) {
+                    closeVideoModal();
                }
           });
      }

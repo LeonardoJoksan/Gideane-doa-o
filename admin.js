@@ -2,6 +2,22 @@
 
 $(document).ready(function () {
 
+     // 0. Navegação em Abas (Tabs) do Painel
+     $('.nav-link').on('click', function(e) {
+          e.preventDefault();
+
+          // Remove active de todos os links e adiciona no clicado
+          $('.nav-link').removeClass('active');
+          $(this).addClass('active');
+
+          // Esconde todas as seções
+          $('.admin-section').hide();
+
+          // Pega o ID da seção a partir do href do link clicado e mostra ela
+          let targetSection = $(this).attr('href');
+          $(targetSection).fadeIn();
+     });
+
      // 1. Salvar Configurações Gerais (Metas e PIX)
      $('#formConfiguracoes').on('submit', function (e) {
           e.preventDefault(); // Bloqueia o recarregamento da página
@@ -127,6 +143,69 @@ $(document).ready(function () {
           });
      });
 
+// ==========================================
+// FUNÇÕES DE EXPORTAÇÃO (PDF)
+// ==========================================
+function exportarPDF(elementId, filename) {
+     const element = document.getElementById(elementId);
+
+     // Remove momentaneamente o botão de exportar para não sair no PDF
+     const botoesExportar = element.querySelectorAll('button');
+     botoesExportar.forEach(b => b.style.display = 'none');
+
+     // Opções do html2pdf
+     var opt = {
+          margin:       0.5,
+          filename:     filename,
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, useCORS: true },
+          jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+     };
+
+     // Adiciona um loading via SweetAlert para feedback
+     Swal.fire({
+          title: 'Gerando PDF...',
+          text: 'Por favor, aguarde enquanto o relatório é criado.',
+          allowOutsideClick: false,
+          didOpen: () => {
+               Swal.showLoading();
+          }
+     });
+
+     // Gera e salva
+     html2pdf().set(opt).from(element).save().then(() => {
+          // Devolve os botões
+          botoesExportar.forEach(b => b.style.display = '');
+          Swal.close();
+          Swal.fire('Sucesso!', 'Seu relatório foi baixado.', 'success');
+     }).catch((err) => {
+          botoesExportar.forEach(b => b.style.display = '');
+          Swal.close();
+          Swal.fire('Erro!', 'Ocorreu um problema ao gerar o PDF.', 'error');
+          console.error(err);
+     });
+}
+
+     // Adicionar Vídeo do Médico
+     $('#formVideoMedico').on('submit', function (e) {
+          e.preventDefault();
+          let formData = $(this).serialize();
+
+          $.ajax({
+               url: 'acoes.php',
+               type: 'POST',
+               data: formData,
+               dataType: 'json',
+               success: function (response) {
+                    if (response.status === 'success') {
+                         Swal.fire('Adicionado!', response.message, 'success').then(() => location.reload());
+                    } else {
+                         Swal.fire('Erro!', response.message, 'error');
+                    }
+               }
+          });
+     });
+
      // 6. Registrar Doação Manual (Atualiza Valor e Mural Simultaneamente)
      $('#formDoacaoManual').on('submit', function (e) {
           e.preventDefault();
@@ -193,6 +272,24 @@ function excluirAtualizacao(id) {
                          }
                     }
                });
+          }
+     });
+}
+
+function excluirVideoMedico(id) {
+     Swal.fire({
+          title: 'Excluir vídeo do médico?',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#EF4444',
+          confirmButtonText: 'Sim'
+     }).then((result) => {
+          if (result.isConfirmed) {
+               $.post('acoes.php', { acao: 'excluir_video_medico', id: id }, function (res) {
+                    if (res.status === 'success') {
+                         $('#video-medico-' + id).fadeOut();
+                    }
+               }, 'json');
           }
      });
 }
