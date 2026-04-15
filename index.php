@@ -113,10 +113,13 @@ try {
 </head>
 <body style="overflow-x: hidden; width: 100%;">
 
-    <div style="position: absolute; top: 15px; right: 15px; z-index: 100; display: flex; gap: 10px; background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 20px; backdrop-filter: blur(5px);">
-        <a href="?lang=pt" style="opacity: <?php echo $lang == 'pt' ? '1' : '0.5'; ?>; transition: 0.3s; text-decoration: none; font-size: 1.2rem;">🇧🇷</a>
-        <a href="?lang=en" style="opacity: <?php echo $lang == 'en' ? '1' : '0.5'; ?>; transition: 0.3s; text-decoration: none; font-size: 1.2rem;">🇺🇸</a>
-        <a href="?lang=es" style="opacity: <?php echo $lang == 'es' ? '1' : '0.5'; ?>; transition: 0.3s; text-decoration: none; font-size: 1.2rem;">🇪🇸</a>
+    <div class="lang-switcher-wrapper">
+        <span class="lang-label">Idioma / Language</span>
+        <div class="lang-switcher">
+            <a href="?lang=pt" title="Português"><img src="https://flagcdn.com/w40/br.png" class="lang-flag <?php echo $lang == 'pt' ? 'active' : 'inactive'; ?>" alt="Português"></a>
+            <a href="?lang=en" title="English"><img src="https://flagcdn.com/w40/us.png" class="lang-flag <?php echo $lang == 'en' ? 'active' : 'inactive'; ?>" alt="English"></a>
+            <a href="?lang=es" title="Español"><img src="https://flagcdn.com/w40/es.png" class="lang-flag <?php echo $lang == 'es' ? 'active' : 'inactive'; ?>" alt="Español"></a>
+        </div>
     </div>
 
     <header class="hero">
@@ -182,7 +185,7 @@ try {
                     <div class="video-wrapper">
                         <div class="media-placeholder">
                             <i class="fas fa-camera"></i>
-                            <span>Nenhuma mídia cadastrada</span>
+                            <span><?php echo $t['media_empty']; ?></span>
                         </div>
                     </div>
                 <?php endif; ?>
@@ -224,8 +227,8 @@ try {
         </div>
 
         <div class="gi-social-box">
-            <h3><i class="fas fa-user-circle"></i> Acompanhe e Fale com a Gi</h3>
-            <p>Sinta-se à vontade para mandar uma mensagem de apoio ou acompanhar a rotina dela:</p>
+            <h3><i class="fas fa-user-circle"></i> <?php echo $t['social_title']; ?></h3>
+            <p><?php echo $t['social_desc']; ?></p>
             
             <div class="gi-social-links">
                 <a href="https://www.instagram.com/gipereira.123/" target="_blank" class="gi-link instagram">
@@ -248,73 +251,73 @@ try {
 
     <section class="section" id="faq">
         <div class="container max-w-800">
-            <h2 class="section-title text-center">Tire suas Dúvidas</h2>
-            <p class="section-subtitle text-center">Transparência total sobre a nossa situação.</p>
+            <h2 class="section-title text-center"><?php echo $t['faq_title']; ?></h2>
+            <p class="section-subtitle text-center"><?php echo $t['faq_sub']; ?></p>
             
             <div class="faq-container">
                 <div class="faq-item">
-                    <div class="faq-question">Por que não esperar pelo SUS em Barretos? <i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer">A fila de espera pelo SUS em Barretos ultrapassa 6 meses. O tumor é agressivo e o médico foi categórico: temos uma janela máxima de <strong>4 semanas</strong> para operar antes que o risco de metástase (o câncer se espalhar) aumente drasticamente. Não temos tempo para esperar.</div>
+                    <div class="faq-question"><?php echo $t['faq_q1']; ?> <i class="fas fa-chevron-down"></i></div>
+                    <div class="faq-answer"><?php echo $t['faq_a1']; ?></div>
                 </div>
                 
                 <div class="faq-item">
-                    <div class="faq-question">A Gi vai recuperar a visão do olho direito? <i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer">Infelizmente, não. A visão que já foi perdida devido ao tumor não pode ser recuperada. O objetivo da Braquiterapia é "secar" o tumor, salvar a vida da Gi e preservar o globo ocular, mantendo a estrutura do seu rosto intacta e evitando a remoção do olho (que exigiria o uso de uma prótese).</div>
+                    <div class="faq-question"><?php echo $t['faq_q2']; ?> <i class="fas fa-chevron-down"></i></div>
+                    <div class="faq-answer"><?php echo $t['faq_a2']; ?></div>
                 </div>
                 
                 <div class="faq-item">
-                    <div class="faq-question">O que acontece se a meta não for alcançada a tempo? <i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer">Estamos fazendo o impossível para bater a meta no prazo de 4 semanas. Caso o valor arrecadado seja parcial, usaremos o montante para tentar dar uma entrada e renegociar os custos direto com o hospital, ou buscaremos empréstimos de emergência para cobrir a diferença. Cada centavo doado será usado exclusivamente no tratamento.</div>
+                    <div class="faq-question"><?php echo $t['faq_q3']; ?> <i class="fas fa-chevron-down"></i></div>
+                    <div class="faq-answer"><?php echo $t['faq_a3']; ?></div>
                 </div>
 
                 <div class="faq-item">
-                    <div class="faq-question">O que é exatamente a Braquiterapia Ocular? <i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer">Consiste em uma cirurgia onde é fixada uma pequena placa radioativa na parte externa do olho, exatamente sobre a área do tumor. Essa placa emite radiação focada e controlada para destruir as células cancerígenas sem afetar o restante do corpo, preservando o globo ocular da Gi.</div>
+                    <div class="faq-question"><?php echo $t['faq_q4']; ?> <i class="fas fa-chevron-down"></i></div>
+                    <div class="faq-answer"><?php echo $t['faq_a4']; ?></div>
                 </div>
 
                 <div class="faq-item">
-                    <div class="faq-question">Como será utilizado o valor de R$ 70.000,00? <i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer">O valor é destinado inteiramente aos custos da cirurgia no Hospital Albert Einstein. Isso inclui a equipe médica altamente especializada do Dr. Rubens Belfort Jr., a confecção e aluguel da placa de radiação (que é feita sob medida), custos de centro cirúrgico, anestesia e os dias de internação necessários.</div>
+                    <div class="faq-question"><?php echo $t['faq_q5']; ?> <i class="fas fa-chevron-down"></i></div>
+                    <div class="faq-answer"><?php echo $t['faq_a5']; ?></div>
                 </div>
 
                 <div class="faq-item">
-                    <div class="faq-question">Como posso ter certeza de que a campanha é verdadeira? <i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer">Acreditamos que a transparência é a base de tudo. Na seção "Transparência" desta página, nós disponibilizamos os laudos dos exames (Ultrassom Ocular, Mapeamento de Retina) e os orçamentos médicos para download. Você pode verificar todos os documentos a qualquer momento.</div>
+                    <div class="faq-question"><?php echo $t['faq_q6']; ?> <i class="fas fa-chevron-down"></i></div>
+                    <div class="faq-answer"><?php echo $t['faq_a6']; ?></div>
                 </div>
 
                 <div class="faq-item">
-                    <div class="faq-question">Quanto tempo a placa de radiação fica no olho? <i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer">A placa radioativa fica fixada no olho temporariamente. Para o tumor de 6mm da Gi, ela ficará por alguns dias (geralmente entre 2 a 4 dias), dependendo do cálculo da dose exata de radiação necessária. Depois desse período, uma segunda pequena cirurgia é feita apenas para remover a placa.</div>
+                    <div class="faq-question"><?php echo $t['faq_q7']; ?> <i class="fas fa-chevron-down"></i></div>
+                    <div class="faq-answer"><?php echo $t['faq_a7']; ?></div>
                 </div>
 
                 <div class="faq-item">
-                    <div class="faq-question">E se a campanha arrecadar mais do que a meta? <i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer">Se um verdadeiro milagre acontecer e ultrapassarmos os R$ 70.000,00, todo o valor excedente será usado estritamente para o pós-operatório da Gi (medicamentos caros, colírios especiais, retornos médicos e transporte). Se ainda assim sobrar algum valor, nós doaremos integralmente para outra campanha de um paciente lutando contra o câncer.</div>
+                    <div class="faq-question"><?php echo $t['faq_q8']; ?> <i class="fas fa-chevron-down"></i></div>
+                    <div class="faq-answer"><?php echo $t['faq_a8']; ?></div>
                 </div>
 
                 <div class="faq-item">
-                    <div class="faq-question">Não tenho como doar dinheiro agora. Como mais posso ajudar? <i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer">O seu compartilhamento é tão valioso quanto uma doação financeira! Clique no botão do WhatsApp no rodapé da página e envie o link para seus contatos, grupos de família e poste nas suas redes sociais. Quanto mais longe a história da Gi chegar, mais rápido bateremos a meta.</div>
+                    <div class="faq-question"><?php echo $t['faq_q9']; ?> <i class="fas fa-chevron-down"></i></div>
+                    <div class="faq-answer"><?php echo $t['faq_a9']; ?></div>
                 </div>
 
                 <div class="faq-item">
-                    <div class="faq-question">Como vou saber das novidades sobre a cirurgia e a saúde da Gi? <i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer">Nós criamos o "Mural de Atualizações" bem aqui no site. Estaremos sempre postando as novidades, a evolução da arrecadação, a marcação da cirurgia e, com fé em Deus, as boas notícias da recuperação dela.</div>
+                    <div class="faq-question"><?php echo $t['faq_q10']; ?> <i class="fas fa-chevron-down"></i></div>
+                    <div class="faq-answer"><?php echo $t['faq_a10']; ?></div>
                 </div>
 
                 <div class="faq-item">
-                    <div class="faq-question">A cirurgia é muito perigosa ou dolorosa? <i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer">A cirurgia é feita sob anestesia geral, então a Gi não sentirá dor durante o procedimento. O pós-operatório pode trazer desconforto, inchaço e vermelhidão, que serão controlados com medicação. O maior risco atual, infelizmente, é não realizar a cirurgia a tempo do tumor se espalhar.</div>
+                    <div class="faq-question"><?php echo $t['faq_q11']; ?> <i class="fas fa-chevron-down"></i></div>
+                    <div class="faq-answer"><?php echo $t['faq_a11']; ?></div>
                 </div>
 
                 <div class="faq-item">
-                    <div class="faq-question">Como é a recuperação pós-cirúrgica? <i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer">A recuperação exige muito repouso e acompanhamento médico rigoroso. Após a retirada da placa, a Gi precisará usar colírios específicos, evitar esforços físicos e fazer exames de imagem frequentemente para confirmar que o tumor "secou" completamente e não há metástase.</div>
+                    <div class="faq-question"><?php echo $t['faq_q12']; ?> <i class="fas fa-chevron-down"></i></div>
+                    <div class="faq-answer"><?php echo $t['faq_a12']; ?></div>
                 </div>
 
                 <div class="faq-item">
-                    <div class="faq-question">Posso doar por outros meios, como transferência bancária tradicional? <i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer">Para concentrar os valores e termos um controle em tempo real da meta (visto que temos apenas 4 semanas), estamos centralizando as doações através do nosso PIX direto ou pelo botão do Mercado Pago (onde você pode usar Cartão de Crédito). O PIX é a forma mais rápida e isenta de taxas para nos ajudar.</div>
+                    <div class="faq-question"><?php echo $t['faq_q13']; ?> <i class="fas fa-chevron-down"></i></div>
+                    <div class="faq-answer"><?php echo $t['faq_a13']; ?></div>
                 </div>
             </div>
         </div>
@@ -360,11 +363,11 @@ try {
                     </div>
                 <?php else: ?>
                     <!-- Formas de Pagamento Internacionais (Stripe) -->
-                    <div class="card donate-card highlight-card" style="grid-column: 1 / -1; max-width: 600px; margin: 0 auto;">
+                    <div class="card donate-card highlight-card" style="grid-column: 1 / -1; max-width: 600px; margin: 0 auto; opacity: 0.8;">
                         <div class="card-icon mp-icon" style="color: #6366F1;"><i class="fab fa-stripe"></i></div>
                         <h3><?php echo $t['donate_stripe_title']; ?></h3>
-                        <p><?php echo $t['donate_stripe_desc']; ?></p>
-                        <a href="doar_stripe.php" class="btn btn-mp" style="background: #6366F1;"><i class="fas fa-globe"></i> <?php echo $t['donate_stripe_btn']; ?></a>
+                        <p style="color: #EF4444; font-weight: 600;"><i class="fas fa-tools"></i> <?php echo $t['donate_stripe_desc']; ?></p>
+                        <a href="#" class="btn btn-mp" style="background: #94A3B8; cursor: not-allowed;" onclick="return false;"><i class="fas fa-clock"></i> <?php echo $t['donate_stripe_btn']; ?></a>
                     </div>
                 <?php endif; ?>
 
@@ -518,7 +521,7 @@ try {
 
             <?php if (count($atualizacoes) > 10): ?>
                 <div class="text-center" style="margin-top: 30px;">
-                    <button id="btnLoadMoreUpdates" class="btn btn-outline" style="border-color: var(--secondary); color: var(--secondary);"><i class="fas fa-chevron-down"></i></button>
+                    <button id="btnLoadMoreUpdates" class="btn btn-outline" style="border-color: var(--secondary); color: var(--secondary);"><?php echo $t['btn_load_more']; ?> <i class="fas fa-chevron-down"></i></button>
                 </div>
             <?php endif; ?>
 
@@ -539,10 +542,10 @@ try {
 
     <div class="share-bar-fixed d-mobile-only">
         <a href="#doar" class="btn btn-donate-full">
-            <i class="fas fa-heart"></i> Ajude Doando
+            <i class="fas fa-heart"></i> <?php echo $t['btn_donate_mobile']; ?>
         </a>
         <button onclick="compartilharZap()" class="btn btn-whatsapp-full">
-            <i class="fab fa-whatsapp"></i> Ajude Compartilhando
+            <i class="fab fa-whatsapp"></i> <?php echo $t['btn_share_mobile']; ?>
         </button>
     </div>
 

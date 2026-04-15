@@ -96,6 +96,64 @@ body {
      border-color: white;
 }
 
+/* --- LANGUAGE SWITCHER --- */
+.lang-switcher-wrapper {
+     position: absolute;
+     top: 15px;
+     right: 15px;
+     z-index: 100;
+     display: flex;
+     flex-direction: column;
+     align-items: flex-end;
+     gap: 5px;
+}
+
+.lang-label {
+     font-size: 0.75rem;
+     color: rgba(255,255,255,0.8);
+     text-transform: uppercase;
+     letter-spacing: 1px;
+     font-weight: 600;
+     text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+     margin-right: 5px;
+}
+
+.lang-switcher {
+     display: flex;
+     gap: 8px;
+     background: rgba(0,0,0,0.5);
+     padding: 8px 12px;
+     border-radius: 30px;
+     backdrop-filter: blur(8px);
+     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+     border: 1px solid rgba(255,255,255,0.1);
+}
+
+.lang-flag {
+     width: 28px;
+     height: 20px;
+     border-radius: 4px;
+     object-fit: cover;
+     transition: transform 0.3s, opacity 0.3s, box-shadow 0.3s;
+     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+     cursor: pointer;
+}
+
+.lang-flag.active {
+     opacity: 1;
+     transform: scale(1.15);
+     border: 2px solid white;
+}
+
+.lang-flag.inactive {
+     opacity: 0.4;
+}
+
+.lang-flag.inactive:hover {
+     opacity: 0.8;
+     transform: scale(1.05);
+}
+
 /* --- HERO SECTION --- */
 .hero {
      background: linear-gradient(135deg, var(--primary) 0%, #1E3A8A 100%);
